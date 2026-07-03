@@ -12,7 +12,7 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 | `Index.{h,cpp}` | generational-handle ids, reverse indices, group selector | **done, tested** |
 | `Kinematics.*` | FK: rotate joint, propagate subtree, re-anchor waypoints | **done, tested** |
 | `DofMap.*` | anatomical DOF layer (name → joint/axis/sign/range) | **done, tested** |
-| `Batch.*` | scale_bone, transform_subtree, mirror | planned |
+| `Batch.*` | scale_bone (along-axis, subtree slide, waypoint re-anchor), translate_subtree, L/R symmetric | **done, tested** |
 | `Complete.*` | joint/bone templates, `list_gaps` | planned |
 | `Atlas.*` | OpenSim `.osim` parse + join | planned |
 | `Validate.*` | internal + atlas checks | planned |
@@ -41,7 +41,9 @@ ctest --test-dir libmassedit/test/build -C Release --output-on-failure
 `test_index` uses a hand-built model; `test_model` builds the Index over `data/human.mass`
 and verifies reference counts (Pelvis = 112 muscles, 23 bones, 284 muscles, Femur = 118
 waypoints); `test_kinematics` checks FK on a synthetic arm (subtree + waypoints follow, parent
-fixed, round-trip, proximal→distal chain order, DofMap value mapping).
+fixed, round-trip, proximal→distal chain order, DofMap value mapping); `test_batch` lengthens a
+synthetic femur (bone scales along its axis; child subtree keeps length and slides; waypoints
+follow; L/R symmetric scales both legs).
 
 > Note: MSVC `<cmath>` resolves `<math.h>` case-insensitively — do **not** put `Arena/src`
 > (which contains `Math.h`) on the include path, or the UCRT `math.h` gets shadowed. This is
