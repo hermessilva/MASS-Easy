@@ -10,10 +10,10 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 |---|---|---|
 | `MassModel.{h,cpp}` | `Model` struct + `.mass` JSON IO (canonical home; Arena will consume this) | present |
 | `Index.{h,cpp}` | generational-handle ids, reverse indices, group selector | **done, tested** |
-| `Kinematics.*` | FK: rotate joint, propagate subtree, re-anchor waypoints | planned |
+| `Kinematics.*` | FK: rotate joint, propagate subtree, re-anchor waypoints | **done, tested** |
+| `DofMap.*` | anatomical DOF layer (name → joint/axis/sign/range) | **done, tested** |
 | `Batch.*` | scale_bone, transform_subtree, mirror | planned |
 | `Complete.*` | joint/bone templates, `list_gaps` | planned |
-| `DofMap.*` | anatomical DOF layer | planned |
 | `Atlas.*` | OpenSim `.osim` parse + join | planned |
 | `Validate.*` | internal + atlas checks | planned |
 
@@ -40,7 +40,8 @@ ctest --test-dir libmassedit/test/build -C Release --output-on-failure
 
 `test_index` uses a hand-built model; `test_model` builds the Index over `data/human.mass`
 and verifies reference counts (Pelvis = 112 muscles, 23 bones, 284 muscles, Femur = 118
-waypoints).
+waypoints); `test_kinematics` checks FK on a synthetic arm (subtree + waypoints follow, parent
+fixed, round-trip, proximal→distal chain order, DofMap value mapping).
 
 > Note: MSVC `<cmath>` resolves `<math.h>` case-insensitively — do **not** put `Arena/src`
 > (which contains `Math.h`) on the include path, or the UCRT `math.h` gets shadowed. This is

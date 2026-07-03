@@ -25,8 +25,16 @@ if(EXISTS "${_vcpkg_inc}/nlohmann/json.hpp")
         "${_vcpkg_inc}")
 endif()
 
+add_executable(test_kinematics
+    test_kinematics.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Index.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Kinematics.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../DofMap.cpp)
+target_include_directories(test_kinematics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
 enable_testing()
 add_test(NAME index COMMAND test_index)
+add_test(NAME kinematics COMMAND test_kinematics)
 if(TARGET test_model)
     add_test(NAME model COMMAND test_model
              "${CMAKE_CURRENT_SOURCE_DIR}/../../data/human.mass")
