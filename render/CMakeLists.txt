@@ -1,21 +1,26 @@
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 3.16)
 project(render)
 
-link_directories(../core/)
-include_directories(../core/)
-
-find_package(DART REQUIRED COMPONENTS gui collision-bullet CONFIG)
+find_package(DART REQUIRED COMPONENTS gui collision-bullet utils CONFIG)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
-find_package(PythonLibs REQUIRED)
-find_package(pybind11 REQUIRED)
-
-include_directories(${DART_INCLUDE_DIRS})
-include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(${GLUT_INCLUDE_DIR})
-include_directories(${PYTHON_INCLUDE_DIR})
+set(PYBIND11_FINDPYTHON ON)
+find_package(pybind11 CONFIG REQUIRED)
 
 file(GLOB srcs "*.h" "*.cpp")
 add_executable(render ${srcs})
-target_link_libraries(render ${DART_LIBRARIES} ${PYTHON_LIBRARIES} GL GLU glut mss pybind11::module pybind11::embed)
+
+target_link_libraries(render
+  PRIVATE
+    mss
+    dart
+    dart-gui
+    dart-collision-bullet
+    dart-utils
+    OpenGL::GL
+    OpenGL::GLU
+    GLUT::GLUT
+    assimp::assimp
+    pybind11::embed)

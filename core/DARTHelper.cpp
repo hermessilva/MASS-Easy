@@ -348,16 +348,24 @@ BuildFromFile(const std::string& path,bool create_obj)
 		if(obj_file!="None" && create_obj)
 		{
 			std::string obj_path = std::string(MASS_ROOT_DIR)+"/data/OBJ/"+obj_file;
-			const aiScene* scene = MeshShape::loadMesh(std::string(obj_path));
+			// createFromPath yields a proper file URI (Windows drive letters like "D:"
+			// would otherwise be parsed as a URI scheme). Pass the Uri overload so the
+			// path is not re-wrapped with a bare "file://" prefix.
+			const aiScene* scene = MeshShape::loadMesh(
+				dart::common::Uri::createFromPath(obj_path),
+				std::make_shared<dart::common::LocalResourceRetriever>());
 
-			MeshShapePtr visual_shape = std::shared_ptr<MeshShape>(new MeshShape(Eigen::Vector3d(0.01,0.01,0.01),scene));
-			visual_shape->setColorMode(MeshShape::ColorMode::SHAPE_COLOR);
-			auto vsn = bn->createShapeNodeWith<VisualAspect>(visual_shape);
+			if(scene != nullptr)
+			{
+				MeshShapePtr visual_shape = std::shared_ptr<MeshShape>(new MeshShape(Eigen::Vector3d(0.01,0.01,0.01),scene));
+				visual_shape->setColorMode(MeshShape::ColorMode::SHAPE_COLOR);
+				auto vsn = bn->createShapeNodeWith<VisualAspect>(visual_shape);
 
-			Eigen::Isometry3d T_obj;
-			T_obj.setIdentity();			
-			T_obj = T_body.inverse();
-			vsn->setRelativeTransform(T_obj);
+				Eigen::Isometry3d T_obj;
+				T_obj.setIdentity();
+				T_obj = T_body.inverse();
+				vsn->setRelativeTransform(T_obj);
+			}
 		}
 	}
 

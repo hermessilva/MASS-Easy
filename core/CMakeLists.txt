@@ -1,17 +1,18 @@
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 3.16)
 project(mss)
-
-SET(CMAKE_BUILD_TYPE Release CACHE STRING
-	"Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel.")
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
-find_package(DART REQUIRED COMPONENTS collision-bullet CONFIG)
-find_package(TinyXML REQUIRED)
-
-include_directories(${DART_INCLUDE_DIRS})
+find_package(DART REQUIRED COMPONENTS collision-bullet utils CONFIG)
+find_package(tinyxml CONFIG REQUIRED)
 
 file(GLOB srcs "*.h" "*.cpp")
 
-add_library(mss ${srcs})
-target_link_libraries(mss ${DART_LIBRARIES} ${TinyXML_LIBRARIES})
+add_library(mss STATIC ${srcs})
+target_include_directories(mss PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(mss
+  PUBLIC
+    dart
+    dart-collision-bullet
+    dart-utils
+    unofficial-tinyxml::unofficial-tinyxml)

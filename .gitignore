@@ -1,4 +1,19 @@
 build/
+Dist/
 *.so
 *.a
+*.lib
+*.pyd
+*.exp
+*.pt
 nn/
+/Deps
+__pycache__/
+imgui.ini
+/New folder/
+python/Release/
+python/Debug/
+core/Release/
+core/Debug/
+editor/Release/
+editor/Debug/

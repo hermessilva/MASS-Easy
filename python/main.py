@@ -19,6 +19,26 @@ import torchvision.transforms as T
 import numpy as np
 import pymss
 from Model import *
+import socket, json as _json
+
+# Optional telemetry to the MASS editor (asio TCP, newline JSON). No-op if editor absent.
+class _Telemetry:
+	def __init__(self, host='127.0.0.1', port=8765):
+		self.sock = None
+		try:
+			s = socket.create_connection((host, port), timeout=0.5)
+			s.settimeout(0.5)
+			self.sock = s
+			print('telemetry: connected to editor at {}:{}'.format(host, port))
+		except Exception:
+			self.sock = None  # editor not running; silently disabled
+	def send(self, d):
+		if self.sock is None:
+			return
+		try:
+			self.sock.sendall((_json.dumps(d) + '\n').encode('utf-8'))
+		except Exception:
+			self.sock = None
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
@@ -116,6 +136,7 @@ class PPO(object):
 		for j in range(self.num_slaves):
 			self.episodes[j] = EpisodeBuffer()
 		self.env.Resets(True)
+		self.telemetry = _Telemetry()
 
 	def SaveModel(self):
 		self.model.save('../nn/current.pt')
@@ -228,7 +249,7 @@ class PPO(object):
 			states = self.env.GetStates()
 		
 	def OptimizeSimulationNN(self):
-		all_transitions = np.array(self.replay_buffer.buffer)
+		all_transitions = np.array(self.replay_buffer.buffer, dtype=object)
 		for j in range(self.num_epochs):
 			np.random.shuffle(all_transitions)
 			for i in range(len(all_transitions)//self.batch_size):
@@ -355,7 +376,15 @@ class PPO(object):
 		print('||Avg Step per episode     : {:.1f}'.format(self.num_tuple/self.num_episode))
 		print('||Max Avg Retun So far     : {:.3f} at #{}'.format(self.max_return,self.max_return_epoch))
 		self.rewards.append(self.sum_return/self.num_episode)
-		
+
+		self.telemetry.send({
+			'iteration': self.num_evaluation,
+			'reward': float(self.sum_return/self.num_episode),
+			'loss_actor': float(self.loss_actor),
+			'loss_critic': float(self.loss_critic),
+			'loss_muscle': float(self.loss_muscle),
+		})
+
 		self.SaveModel()
 		
 		print('=============================================')

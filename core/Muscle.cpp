@@ -1,4 +1,6 @@
 #include "Muscle.h"
+#include <numeric>
+#include <algorithm>
 
 using namespace MASS;
 using namespace dart::dynamics;
