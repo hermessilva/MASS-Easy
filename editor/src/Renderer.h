@@ -23,7 +23,14 @@ struct Renderer {
     void point(const V3& p, const V3& color, float alpha = 1.0f);
     void wireBox(const M4& model, const V3& halfExtents, const V3& color, float alpha = 1.0f);
     void solidBox(const M4& model, const V3& halfExtents, const V3& color, float alpha = 1.0f);
+    // add a single world-space triangle (face normal computed) to the batched lit pass
+    void triWorld(const V3& a, const V3& b, const V3& c, const V3& color, float alpha = 1.0f);
+    // world-space triangle with explicit per-vertex normals (smooth shading)
+    void triSmooth(const V3& a, const V3& na, const V3& b, const V3& nb,
+                   const V3& c, const V3& nc, const V3& color, float alpha = 1.0f);
     void solidSphere(const V3& center, float radius, const V3& color, int seg = 12);
+    // smooth ellipsoid: unit sphere scaled by halfExtents, transformed by model (skin envelope)
+    void solidEllipsoid(const M4& model, const V3& halfExtents, const V3& color, int seg = 14);
     // GPU mesh: upload once, draw many with a per-body model matrix (transform on GPU)
     unsigned uploadMesh(const std::vector<V3>& pos, const std::vector<V3>& nrm); // returns id (0 = fail)
     void drawMeshGPU(unsigned id, const M4& model, const V3& color);            // queued, drawn in flush

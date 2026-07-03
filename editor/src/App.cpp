@@ -210,6 +210,74 @@ V3 App::liveWaypoint(const Waypoint& w) const {
     return V3(w.p);
 }
 
+static V3 catmullRom(const V3& p0, const V3& p1, const V3& p2, const V3& p3, float t) {
+    float t2 = t*t, t3 = t2*t;
+    return (p1*2.0f + (p2 - p0)*t
+            + (p0*2.0f - p1*5.0f + p2*4.0f - p3)*t2
+            + (p1*3.0f - p0 - p2*3.0f + p3)*t3) * 0.5f;
+}
+
+// Natural muscle volume: smooth Catmull-Rom tube through the (live) waypoints so it
+// curves and follows the body as joints move. Parallel-transport frames (no twist),
+// radial smooth normals, fusiform radius from PCSA (r=sqrt(PCSA/pi); PCSA=f0/sigma).
+void App::drawMuscleTube(const Muscle& mu, const V3& color) {
+    int nw = (int)mu.waypoints.size();
+    if (nw < 2) return;
+    std::vector<V3> cp(nw);
+    for (int i = 0; i < nw; i++) cp[i] = liveWaypoint(mu.waypoints[i]);
+    auto CP = [&](int i){ return cp[i < 0 ? 0 : (i >= nw ? nw-1 : i)]; };
+
+    // sample a smooth centerline
+    const int SUB = 6;
+    std::vector<V3> S;
+    S.reserve((nw-1)*SUB + 1);
+    for (int seg = 0; seg < nw-1; seg++) {
+        V3 p0=CP(seg-1), p1=CP(seg), p2=CP(seg+1), p3=CP(seg+2);
+        for (int j = 0; j < SUB; j++) S.push_back(catmullRom(p0,p1,p2,p3, (float)j/SUB));
+    }
+    S.push_back(cp[nw-1]);
+    int ns = (int)S.size();
+    if (ns < 2) return;
+
+    double pcsa = mu.pcsa_cm2 > 0.0 ? mu.pcsa_cm2 : mu.f0 / mModel.meta.specific_tension_N_cm2;
+    float rBase = (float)std::sqrt(std::max(pcsa, 0.01) / 3.14159265) * 0.01f;
+    if (rBase < 0.003f) rBase = 0.003f;
+    if (rBase > 0.035f) rBase = 0.035f;
+
+    const int RING = 9;
+    // initial frame
+    V3 tan0 = normalize(S[1] - S[0]);
+    V3 up = (std::fabs(tan0.y) > 0.9f) ? V3{1,0,0} : V3{0,1,0};
+    V3 u = normalize(cross(tan0, up));
+    V3 v = normalize(cross(tan0, u));
+    std::vector<V3> prevRing, prevN;
+    for (int i = 0; i < ns; i++) {
+        V3 tan = normalize(i==0 ? S[1]-S[0] : (i==ns-1 ? S[ns-1]-S[ns-2] : S[i+1]-S[i-1]));
+        // parallel transport: keep u perpendicular to the new tangent
+        u = normalize(u - tan * dot(u, tan));
+        if (length(u) < 1e-4f) { up = (std::fabs(tan.y) > 0.9f) ? V3{1,0,0} : V3{0,1,0}; u = normalize(cross(tan, up)); }
+        v = normalize(cross(tan, u));
+        float s = (float)i / (ns - 1);
+        float profile = 0.30f + 0.70f * std::sin(3.14159265f * s);
+        float r = rBase * profile;
+        std::vector<V3> ring(RING), rn(RING);
+        for (int k = 0; k < RING; k++) {
+            float a = 6.2831853f * k / RING;
+            V3 dir = u * std::cos(a) + v * std::sin(a);
+            ring[k] = S[i] + dir * r;
+            rn[k] = dir;                    // radial smooth normal
+        }
+        if (i > 0) {
+            for (int k = 0; k < RING; k++) {
+                int k2 = (k + 1) % RING;
+                mRen.triSmooth(prevRing[k], prevN[k], prevRing[k2], prevN[k2], ring[k2], rn[k2], color);
+                mRen.triSmooth(prevRing[k], prevN[k], ring[k2], rn[k2], ring[k], rn[k], color);
+            }
+        }
+        prevRing = ring; prevN = rn;
+    }
+}
+
 V3 App::selectionCenter() const {
     switch (mSel.type) {
         case SelType::Body:
@@ -350,14 +418,29 @@ void App::drawScene() {
         for (int i = 0; i < (int)mModel.muscles.size(); i++) {
             const Muscle& mu = mModel.muscles[i];
             bool selM = ((mSel.type == SelType::Muscle || mSel.type == SelType::Waypoint) && mSel.index == i);
-            V3 mcol = selM ? V3{1.0f, 1.0f, 0.3f} : V3{0.85f, 0.15f, 0.2f};
-            for (size_t k = 1; k < mu.waypoints.size(); k++)
-                mRen.line(liveWaypoint(mu.waypoints[k-1]), liveWaypoint(mu.waypoints[k]), mcol, 0.9f);
+            V3 mcol = selM ? V3{1.0f, 0.85f, 0.3f} : V3{0.72f, 0.12f, 0.13f};
+            if (mMuscleVolume)
+                drawMuscleTube(mu, mcol);
+            else
+                for (size_t k = 1; k < mu.waypoints.size(); k++)
+                    mRen.line(liveWaypoint(mu.waypoints[k-1]), liveWaypoint(mu.waypoints[k]), mcol, 0.9f);
             if (mShowWaypoints)
                 for (size_t k = 0; k < mu.waypoints.size(); k++) {
                     bool selW = (mSel.type == SelType::Waypoint && mSel.index == i && mSel.sub == (int)k);
                     mRen.point(liveWaypoint(mu.waypoints[k]), selW ? V3{0.2f,1.0f,1.0f} : V3{1.0f,0.6f,0.2f});
                 }
+        }
+    }
+
+    // skin envelope: a smooth ellipsoid per body enclosing bone+muscle (approx skin)
+    if (mShowSkin) {
+        V3 skin{0.82f, 0.63f, 0.54f};
+        for (const auto& n : mModel.skeleton) {
+            M4 bm = liveBodyMatrix(n);
+            V3 he = n.body.type == "Box"
+                ? V3{(float)n.body.size[0]*0.62f, (float)n.body.size[1]*0.55f, (float)n.body.size[2]*0.62f}
+                : V3{(float)n.body.radius*1.3f, (float)n.body.radius*1.3f, (float)n.body.radius*1.3f};
+            mRen.solidEllipsoid(bm, he, skin);
         }
     }
 

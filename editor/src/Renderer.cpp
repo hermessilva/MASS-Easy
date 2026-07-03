@@ -201,6 +201,38 @@ void Renderer::solidSphere(const V3& ctr, float r, const V3& col, int seg){
         }
     }
 }
+void Renderer::solidEllipsoid(const M4& model, const V3& he, const V3& col, int seg){
+    auto P = [&](float t, float p){                 // unit-sphere dir
+        return V3{ std::sin(t)*std::cos(p), std::cos(t), std::sin(t)*std::sin(p) };
+    };
+    for (int i = 0; i < seg; i++) {
+        float t0 = (float)i/seg*3.14159265f, t1 = (float)(i+1)/seg*3.14159265f;
+        for (int j = 0; j < seg*2; j++) {
+            float p0 = (float)j/(seg*2)*6.2831853f, p1 = (float)(j+1)/(seg*2)*6.2831853f;
+            V3 d[4] = { P(t0,p0), P(t1,p0), P(t1,p1), P(t0,p1) };
+            V3 wp[4], wn[4];
+            for (int k = 0; k < 4; k++) {
+                V3 local{ d[k].x*he.x, d[k].y*he.y, d[k].z*he.z };
+                wp[k] = mulPoint(model, local);
+                // ellipsoid normal ~ (dx/hx, dy/hy, dz/hz) rotated to world
+                V3 nl{ d[k].x/he.x, d[k].y/he.y, d[k].z/he.z };
+                wn[k] = normalize(mulDir(model, nl));
+            }
+            triSmooth(wp[0],wn[0], wp[1],wn[1], wp[2],wn[2], col);
+            triSmooth(wp[0],wn[0], wp[2],wn[2], wp[3],wn[3], col);
+        }
+    }
+}
+void Renderer::triWorld(const V3& a, const V3& b, const V3& c, const V3& col, float al){
+    V3 n = normalize(cross(b - a, c - a));
+    tri(a, b, c, n, col, al);
+}
+void Renderer::triSmooth(const V3& a, const V3& na, const V3& b, const V3& nb,
+                         const V3& c, const V3& nc, const V3& col, float al){
+    mTris.push_back({a.x,a.y,a.z, na.x,na.y,na.z, col.x,col.y,col.z,al});
+    mTris.push_back({b.x,b.y,b.z, nb.x,nb.y,nb.z, col.x,col.y,col.z,al});
+    mTris.push_back({c.x,c.y,c.z, nc.x,nc.y,nc.z, col.x,col.y,col.z,al});
+}
 void Renderer::axes(const M4& model,float s){
     V3 o=mulPoint(model,{0,0,0});
     line(o, mulPoint(model,{s,0,0}), {0.9f,0.2f,0.2f});

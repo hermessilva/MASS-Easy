@@ -45,7 +45,10 @@ private:
     bool mShowJoints = false;
     bool mShowWaypoints = false;
     bool mShowLightMarkers = false;
-    bool mShowMesh = true;   // render OBJ body meshes instead of boxes
+    bool mShowMesh = true;      // render OBJ body meshes instead of boxes
+    bool mMuscleVolume = true;  // render muscles as fusiform volume tubes (not lines)
+    bool mShowSkin = false;     // skin envelope (placeholder; real skin = marching-cubes)
+    void drawMuscleTube(const Muscle& mu, const V3& color);
 
     std::vector<MeshData> mMeshes;  // per-node visual meshes (OBJ), rest world space
     void loadMeshes();

@@ -98,7 +98,8 @@ void App::drawTree() {
             {"Ossos##vis", &mShowBones}, {"Musculos##vis", &mShowMuscles},
             {"Juntas##vis", &mShowJoints}, {"Waypoints##vis", &mShowWaypoints},
             {"Luzes##vis", &mShowLightMarkers}, {"Piso##vis", &mDrawGrid},
-            {"Malhas##vis", &mShowMesh},
+            {"Malhas##vis", &mShowMesh}, {"Volume musc##vis", &mMuscleVolume},
+            {"Pele##vis", &mShowSkin},
         };
         const int n = (int)(sizeof(items)/sizeof(items[0]));
         ImGuiStyle& st = ImGui::GetStyle();
