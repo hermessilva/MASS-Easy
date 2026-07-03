@@ -42,7 +42,7 @@ inline std::string pickFolderDialog() {
 #ifdef _WIN32
     // simple folder pick via save dialog trick is clumsy; use SHBrowseForFolder
     BROWSEINFOA bi = {0};
-    bi.lpszTitle = "Selecione a pasta de saida";
+    bi.lpszTitle = "Select the output folder";
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
     LPITEMIDLIST pidl = SHBrowseForFolderA(&bi);
     if (pidl) {

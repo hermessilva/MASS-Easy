@@ -34,4 +34,4 @@ if(WIN32)
   target_link_libraries(arena PRIVATE opengl32 comdlg32 shell32 ws2_32 mswsock)
 endif()
 
-set_target_properties(arena PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/editor)
+set_target_properties(arena PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Arena)

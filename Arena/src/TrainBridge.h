@@ -50,7 +50,7 @@ private:
     std::mutex mMx;
     Telemetry mLatest;
     std::vector<float> mRewards;
-    std::string mStatus = "parado";
+    std::string mStatus = "stopped";
 
     unsigned long mTrainPid = 0;
 };

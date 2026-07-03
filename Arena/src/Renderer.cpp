@@ -101,6 +101,8 @@ void Renderer::shutdown(){
     if(mColorTex) glDeleteTextures(1,&mColorTex);
     if(mDepthRbo) glDeleteRenderbuffers(1,&mDepthRbo);
     if(mFbo) glDeleteFramebuffers(1,&mFbo);
+    if(mSkinVbo) glDeleteBuffers(1,&mSkinVbo);
+    if(mSkinVao) glDeleteVertexArrays(1,&mSkinVao);
     freeMeshes();
 }
 void Renderer::beginTarget(int w, int h){
@@ -127,7 +129,7 @@ void Renderer::beginTarget(int w, int h){
 }
 void Renderer::endTarget(){ glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-void Renderer::begin(const M4& vp, const V3& eye){ mVP=vp; mEye=eye; mLines.clear(); mPoints.clear(); mTris.clear(); mMeshCmds.clear(); }
+void Renderer::begin(const M4& vp, const V3& eye){ mVP=vp; mEye=eye; mLines.clear(); mPoints.clear(); mTris.clear(); mMeshCmds.clear(); mSkinCmd.active=false; }
 
 unsigned Renderer::uploadMesh(const std::vector<V3>& pos, const std::vector<V3>& nrm){
     if (pos.empty() || pos.size() != nrm.size()) return 0;
@@ -149,6 +151,26 @@ unsigned Renderer::uploadMesh(const std::vector<V3>& pos, const std::vector<V3>&
 void Renderer::drawMeshGPU(unsigned id, const M4& model, const V3& color){
     if (id == 0 || id > mGpuMeshes.size()) return;
     mMeshCmds.push_back({id, model, color});
+}
+void Renderer::setSkinMesh(const std::vector<V3>& pos, const std::vector<V3>& nrm){
+    mSkinCount = 0;
+    if (pos.empty() || pos.size() != nrm.size()) return;
+    std::vector<float> data; data.reserve(pos.size()*6);
+    for (size_t i=0;i<pos.size();i++){
+        data.push_back(pos[i].x); data.push_back(pos[i].y); data.push_back(pos[i].z);
+        data.push_back(nrm[i].x); data.push_back(nrm[i].y); data.push_back(nrm[i].z);
+    }
+    if (!mSkinVao) glGenVertexArrays(1,&mSkinVao);
+    if (!mSkinVbo) glGenBuffers(1,&mSkinVbo);
+    glBindVertexArray(mSkinVao); glBindBuffer(GL_ARRAY_BUFFER,mSkinVbo);
+    glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(float), data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)0); glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)(3*sizeof(float))); glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    mSkinCount = (int)pos.size();
+}
+void Renderer::drawSkin(const M4& model, const V3& color){
+    mSkinCmd.active = true; mSkinCmd.model = model; mSkinCmd.color = color;
 }
 void Renderer::freeMeshes(){
     for (auto& g : mGpuMeshes){ if(g.vbo) glDeleteBuffers(1,&g.vbo); if(g.vao) glDeleteVertexArrays(1,&g.vao); }
@@ -263,7 +285,7 @@ void Renderer::draw(const std::vector<Vtx>& buf, unsigned mode){
 }
 void Renderer::flush(){
     // batched world-space tris (boxes/ground) + GPU meshes share the lit program
-    if (!mTris.empty() || !mMeshCmds.empty()) {
+    if (!mTris.empty() || !mMeshCmds.empty() || (mSkinCmd.active && mSkinCount>0)) {
         glUseProgram(mProgLit);
         glUniformMatrix4fv(glGetUniformLocation(mProgLit,"uVP"),1,GL_FALSE,mVP.data());
         glUniform3f(glGetUniformLocation(mProgLit,"uEye"),mEye.x,mEye.y,mEye.z);
@@ -299,6 +321,14 @@ void Renderer::flush(){
             glUniform3f(glGetUniformLocation(mProgLit,"uColorU"), cmd.color.x, cmd.color.y, cmd.color.z);
             glBindVertexArray(g.vao);
             glDrawArrays(GL_TRIANGLES,0,g.count);
+        }
+        // skin (dedicated buffer)
+        if (mSkinCmd.active && mSkinCount > 0) {
+            glUniform1i(glGetUniformLocation(mProgLit,"uUseColor"),1);
+            glUniformMatrix4fv(glGetUniformLocation(mProgLit,"uModel"),1,GL_FALSE,mSkinCmd.model.data());
+            glUniform3f(glGetUniformLocation(mProgLit,"uColorU"), mSkinCmd.color.x, mSkinCmd.color.y, mSkinCmd.color.z);
+            glBindVertexArray(mSkinVao);
+            glDrawArrays(GL_TRIANGLES,0,mSkinCount);
         }
     }
     // lines/points (flat) on top (depth-tested, like the reference viewer)

@@ -35,7 +35,7 @@ New-Item -ItemType Directory -Path $dist -Force | Out-Null
 
 $renderOut = "$build\render\$Config"
 $pymssOut  = "$root\python\$Config"
-$editorOut = "$build\editor\$Config"
+$editorOut = "$build\Arena\$Config"
 
 Copy-Item "$renderOut\render.exe" $dist -Force
 Copy-Item "$renderOut\*.dll"      $dist -Force

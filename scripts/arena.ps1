@@ -12,7 +12,7 @@ if ($Mass -eq "" -and (Test-Path "$root\data\human.mass")) { $Mass = "$root\data
 # DART also loads one. Allow the duplicate to avoid an abort.
 $env:KMP_DUPLICATE_LIB_OK = "TRUE"
 
-$exe = "$root\build\editor\Release\arena.exe"
+$exe = "$root\build\Arena\Release\arena.exe"
 if (-not (Test-Path $exe)) { $exe = "$root\Dist\x64\Release\arena.exe" }
 
 if ($Mass -ne "") { & $exe $Mass } else { & $exe }

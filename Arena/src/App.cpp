@@ -26,10 +26,10 @@ void App::shutdown() { mTrain.stop(); mRen.shutdown(); }
 void App::startTraining() {
     // export current model to the real training data dir, then launch training
     std::string err;
-    if (!ExportToLegacy(mModel, mDataRoot + "/data", &err)) { mStatus = "export p/ data falhou: " + err; return; }
+    if (!ExportToLegacy(mModel, mDataRoot + "/data", &err)) { mStatus = "export to data failed: " + err; return; }
     std::string cmd = "powershell -ExecutionPolicy Bypass -File \"" + mDataRoot + "\\scripts\\train.ps1\"";
     mTrain.launchTraining(cmd);
-    mStatus = "Treino disparado (modelo exportado p/ data)";
+    mStatus = "Training started (model exported to data)";
 }
 
 // ---- OBJ loader (positions in world*100 -> *0.01; per-vertex normals) ----
@@ -110,13 +110,64 @@ void App::syncMeshes() {
     if (dirty) loadMeshes();
 }
 
+void App::generateSkin() { regenerateSkin(); }
+void App::startKinematicSim() { if (!mSimActive) toggleSim(); mSim.setMode(SimBridge::Kinematic); }
+
+void App::regenerateSkin() {
+    std::vector<V3> pos, nrm;
+    GenerateSkin(mModel, mSkinParams, pos, nrm);
+    // bind each skin vertex to the nearest body and store it in that body's local space,
+    // so the skin follows the skeleton (rigid skinning).
+    size_t nv = pos.size();
+    mSkinLocalPos.assign(nv, V3{});
+    mSkinLocalNrm.assign(nv, V3{});
+    mSkinBone.assign(nv, 0);
+    int nb = (int)mModel.skeleton.size();
+    std::vector<M4> restInv(nb);
+    for (int b = 0; b < nb; b++) restInv[b] = rigidInverse(fromTransform(mModel.skeleton[b].body.t));
+    float bs = mSkinParams.bodyScale;
+    for (size_t i = 0; i < nv; i++) {
+        int best = 0; float bestK = 1e30f;
+        for (int b = 0; b < nb; b++) {
+            const Node& n = mModel.skeleton[b];
+            V3 lp = mulPoint(restInv[b], pos[i]);   // into body-local
+            V3 he = n.body.type == "Box"
+                ? V3{(float)n.body.size[0]*0.5f*bs, (float)n.body.size[1]*0.5f*bs, (float)n.body.size[2]*0.5f*bs}
+                : V3{(float)n.body.radius*bs, (float)n.body.radius*bs, (float)n.body.radius*bs};
+            float k = length(V3{ lp.x/std::max(he.x,1e-4f), lp.y/std::max(he.y,1e-4f), lp.z/std::max(he.z,1e-4f) });
+            if (k < bestK) { bestK = k; best = b; }
+        }
+        mSkinBone[i] = best;
+        mSkinLocalPos[i] = mulPoint(restInv[best], pos[i]);
+        mSkinLocalNrm[i] = mulDir(restInv[best], nrm[i]);
+    }
+    mShowSkin = nv > 0;
+    updateSkinPose();
+    mStatus = "Skin generated: " + std::to_string(nv/3) + " triangles";
+}
+
+void App::updateSkinPose() {
+    size_t nv = mSkinLocalPos.size();
+    if (nv == 0) return;
+    std::vector<V3> pos(nv), nrm(nv);
+    int nb = (int)mModel.skeleton.size();
+    std::vector<M4> M(nb);
+    for (int b = 0; b < nb; b++) M[b] = liveBodyMatrix(mModel.skeleton[b]);
+    for (size_t i = 0; i < nv; i++) {
+        int b = mSkinBone[i]; if (b < 0 || b >= nb) b = 0;
+        pos[i] = mulPoint(M[b], mSkinLocalPos[i]);
+        nrm[i] = normalize(mulDir(M[b], mSkinLocalNrm[i]));
+    }
+    mRen.setSkinMesh(pos, nrm);
+}
+
 void App::seedLightsIfEmpty() {
     if (!mModel.lights.empty()) return;
-    Light key;  key.name = "Principal"; key.type = 0; key.dir = {0.4, 0.9, 0.5};
+    Light key;  key.name = "Key"; key.type = 0; key.dir = {0.4, 0.9, 0.5};
     key.color = {1.0, 0.97, 0.9}; key.intensity = 1.1;
-    Light fill; fill.name = "Preenchimento"; fill.type = 0; fill.dir = {-0.5, 0.4, -0.4};
+    Light fill; fill.name = "Fill"; fill.type = 0; fill.dir = {-0.5, 0.4, -0.4};
     fill.color = {0.6, 0.7, 1.0}; fill.intensity = 0.6;
-    Light back; back.name = "Contra"; back.type = 0; back.dir = {0.0, 0.3, -0.9};
+    Light back; back.name = "Back"; back.type = 0; back.dir = {0.0, 0.3, -0.9};
     back.color = {0.8, 0.8, 0.9}; back.intensity = 0.4;
     mModel.lights = { key, fill, back };
     mModel.ambient = 0.4;
@@ -129,7 +180,7 @@ void App::newModel() {
     mSel.clear();
     mUndo.clear(); mRedo.clear();
     mProjectPath.clear();
-    mStatus = "Novo modelo vazio";
+    mStatus = "New empty model";
 }
 
 void App::loadProjectPath(const std::string& path) {
@@ -137,8 +188,8 @@ void App::loadProjectPath(const std::string& path) {
     auto m = Model::LoadMass(path, &err);
     if (m) { mModel = *m; mProjectPath = path; mDataRoot = deriveRoot(path);
              seedLightsIfEmpty(); loadMeshes(); mSel.clear(); mUndo.clear(); mRedo.clear();
-             mStatus = "Aberto: " + path; }
-    else mStatus = "Erro ao abrir: " + err;
+             mStatus = "Opened: " + path; }
+    else mStatus = "Open error: " + err;
 }
 
 // ---- undo ----
@@ -151,13 +202,13 @@ void App::undo() {
     if (mUndo.empty()) return;
     mRedo.push_back(mModel);
     mModel = mUndo.back(); mUndo.pop_back();
-    mSel.clear(); mStatus = "Desfeito";
+    mSel.clear(); mStatus = "Undone";
 }
 void App::redo() {
     if (mRedo.empty()) return;
     mUndo.push_back(mModel);
     mModel = mRedo.back(); mRedo.pop_back();
-    mSel.clear(); mStatus = "Refeito";
+    mSel.clear(); mStatus = "Redone";
 }
 
 // ---- helpers ----
@@ -324,7 +375,7 @@ void App::resetView() {
     def.target = center;
     mCam = def;
     if (mSimActive) mSim.requestReset();   // reposition the character too
-    mStatus = "Vista resetada";
+    mStatus = "View reset";
 }
 
 void App::toggleSim() {
@@ -332,9 +383,9 @@ void App::toggleSim() {
         mSim.stop();
         mSimActive = false;
         mLivePose.clear();
-        mStatus = "Simulacao parada (modo edicao)";
+        mStatus = "Simulation stopped (edit mode)";
     } else {
-        if (mModel.skeleton.empty()) { mStatus = "Carregue um modelo primeiro"; return; }
+        if (mModel.skeleton.empty()) { mStatus = "Load a model first"; return; }
         std::string tmp = mDataRoot + "/build/editor_tmp";
 #ifdef _WIN32
         std::string mk = "cmd /c mkdir \"" + tmp + "\" 2>nul";
@@ -347,7 +398,7 @@ void App::toggleSim() {
         mSim.setPaused(false);
         mSim.start();
         mSimActive = true;
-        mStatus = "Simulacao iniciada";
+        mStatus = "Simulation started";
     }
 }
 
@@ -432,15 +483,13 @@ void App::drawScene() {
         }
     }
 
-    // skin envelope: a smooth ellipsoid per body enclosing bone+muscle (approx skin)
+    // continuous skin mesh (marching-cubes) with rigid skinning so it follows the skeleton
     if (mShowSkin) {
-        V3 skin{0.82f, 0.63f, 0.54f};
-        for (const auto& n : mModel.skeleton) {
-            M4 bm = liveBodyMatrix(n);
-            V3 he = n.body.type == "Box"
-                ? V3{(float)n.body.size[0]*0.62f, (float)n.body.size[1]*0.55f, (float)n.body.size[2]*0.62f}
-                : V3{(float)n.body.radius*1.3f, (float)n.body.radius*1.3f, (float)n.body.radius*1.3f};
-            mRen.solidEllipsoid(bm, he, skin);
+        if (mSkinLocalPos.empty()) regenerateSkin();   // auto-generate the first time it is enabled
+        if (mShowSkin && !mSkinLocalPos.empty()) {
+            updateSkinPose();                           // deform to the live pose each frame
+            M4 ident;
+            mRen.drawSkin(ident, V3{0.86f, 0.66f, 0.56f});
         }
     }
 
@@ -590,16 +639,16 @@ void App::openMass() {
     auto m = Model::LoadMass(p, &err);
     if (m) { mModel = *m; mProjectPath = p; mDataRoot = deriveRoot(p);
              seedLightsIfEmpty(); loadMeshes(); mSel.clear(); mUndo.clear(); mRedo.clear();
-             mStatus = "Aberto: " + p; }
-    else mStatus = "Erro ao abrir: " + err;
+             mStatus = "Opened: " + p; }
+    else mStatus = "Open error: " + err;
 }
 void App::saveMass(bool as) {
     std::string p = mProjectPath;
     if (as || p.empty()) p = saveFileDialog();
     if (p.empty()) return;
     std::string err;
-    if (mModel.SaveMass(p, &err)) { mProjectPath = p; mStatus = "Salvo: " + p; }
-    else mStatus = "Erro ao salvar: " + err;
+    if (mModel.SaveMass(p, &err)) { mProjectPath = p; mStatus = "Saved: " + p; }
+    else mStatus = "Save error: " + err;
 }
 void App::bootstrap() {
     std::string meta = openFileDialog("metadata.txt\0*.txt\0All\0*.*\0");
@@ -612,15 +661,15 @@ void App::bootstrap() {
     auto m = BootstrapFromLegacy(meta, root, &err);
     if (m) { mModel = *m; mDataRoot = root; seedLightsIfEmpty(); loadMeshes(); mSel.clear(); mUndo.clear(); mRedo.clear();
              mStatus = "Bootstrap OK: " + std::to_string(mModel.skeleton.size()) + " nodes, "
-                       + std::to_string(mModel.muscles.size()) + " musculos"; }
-    else mStatus = "Erro bootstrap: " + err;
+                       + std::to_string(mModel.muscles.size()) + " muscles"; }
+    else mStatus = "Bootstrap error: " + err;
 }
 void App::exportLegacy() {
     std::string dir = pickFolderDialog();
     if (dir.empty()) return;
     std::string err;
-    if (ExportToLegacy(mModel, dir, &err)) mStatus = "Exportado para: " + dir;
-    else mStatus = "Erro export: " + err;
+    if (ExportToLegacy(mModel, dir, &err)) mStatus = "Exported to: " + dir;
+    else mStatus = "Export error: " + err;
 }
 void App::addBody() {
     snapshot();
@@ -630,25 +679,25 @@ void App::addBody() {
     n.joint.type = "Ball";
     mModel.skeleton.push_back(n);
     mSel = {SelType::Body, (int)mModel.skeleton.size()-1, -1};
-    mStatus = "Body adicionado";
+    mStatus = "Body added";
 }
 void App::removeSelected() {
     if (mSel.type == SelType::Body || mSel.type == SelType::Joint) {
         if (mSel.index < 0 || mSel.index >= (int)mModel.skeleton.size()) return;
         snapshot();
         mModel.skeleton.erase(mModel.skeleton.begin() + mSel.index);
-        mSel.clear(); mStatus = "Node removido";
+        mSel.clear(); mStatus = "Node removed";
     } else if (mSel.type == SelType::Muscle) {
         if (mSel.index < 0 || mSel.index >= (int)mModel.muscles.size()) return;
         snapshot();
         mModel.muscles.erase(mModel.muscles.begin() + mSel.index);
-        mSel.clear(); mStatus = "Musculo removido";
+        mSel.clear(); mStatus = "Muscle removed";
     } else if (mSel.type == SelType::Waypoint) {
         if (Muscle* mu = selMuscle()) {
             if (mu->waypoints.size() > 2 && mSel.sub >= 0) {
                 snapshot();
                 mu->waypoints.erase(mu->waypoints.begin() + mSel.sub);
-                mSel = {SelType::Muscle, mSel.index, -1}; mStatus = "Waypoint removido";
+                mSel = {SelType::Muscle, mSel.index, -1}; mStatus = "Waypoint removed";
             }
         }
     }
@@ -659,7 +708,7 @@ void App::importOsim() {
     std::string err;
     mAtlas = ImportOsimMuscles(p, &err);
     mStatus = mAtlas.empty() ? ("Atlas: " + err)
-                             : ("Atlas carregado: " + std::to_string(mAtlas.size()) + " musculos de referencia");
+                             : ("Atlas loaded: " + std::to_string(mAtlas.size()) + " reference muscles");
 }
 void App::applyAtlas(const AtlasEntry& a) {
     if (Muscle* mu = selMuscle()) {
@@ -667,8 +716,8 @@ void App::applyAtlas(const AtlasEntry& a) {
         mu->f0 = a.f0;                 // physiological max isometric force
         mu->pen_angle = a.pen_angle;   // pennation angle (rad)
         if (mu->latin.empty()) mu->latin = a.name;
-        mStatus = "Atlas aplicado a " + mu->name + " (f0=" + std::to_string((int)a.f0) + "N)";
-    } else mStatus = "Selecione um musculo primeiro";
+        mStatus = "Atlas applied to " + mu->name + " (f0=" + std::to_string((int)a.f0) + "N)";
+    } else mStatus = "Select a muscle first";
 }
 // mirror a body/muscle name across sides: FemurR<->FemurL, R_x<->L_x
 static std::string mirrorName(const std::string& s) {
@@ -680,7 +729,7 @@ static std::string mirrorName(const std::string& s) {
 }
 void App::mirrorSelectedMuscle() {
     Muscle* mu = selMuscle();
-    if (!mu) { mStatus = "Selecione um musculo para espelhar"; return; }
+    if (!mu) { mStatus = "Select a muscle to mirror"; return; }
     snapshot();
     Muscle mir = *mu;
     mir.name = mirrorName(mu->name);
@@ -690,7 +739,7 @@ void App::mirrorSelectedMuscle() {
     // replace existing mirror if present, else append
     if (Muscle* existing = mModel.findMuscle(mir.name)) *existing = mir;
     else mModel.muscles.push_back(mir);
-    mStatus = "Espelhado -> " + mir.name;
+    mStatus = "Mirrored -> " + mir.name;
 }
 void App::duplicateSelectedMuscle() {
     if (Muscle* mu = selMuscle()) {
@@ -698,7 +747,7 @@ void App::duplicateSelectedMuscle() {
         Muscle copy = *mu; copy.name += "_copy";
         mModel.muscles.push_back(copy);
         mSel = {SelType::Muscle, (int)mModel.muscles.size()-1, -1};
-        mStatus = "Musculo duplicado";
+        mStatus = "Muscle duplicated";
     }
 }
 

@@ -77,7 +77,7 @@ void SimBridge::threadMain() {
         { std::lock_guard<std::mutex> lk(mMx); m = mPending; }
         // export to temp legacy files
         std::string err;
-        if (!ExportToLegacy(m, mTmpDir, &err)) { setStatus("export tmp falhou: " + err); return false; }
+        if (!ExportToLegacy(m, mTmpDir, &err)) { setStatus("tmp export failed: " + err); return false; }
         if (character) { delete character; character = nullptr; }
         try {
             character = new MASS::Character();
@@ -110,9 +110,9 @@ void SimBridge::threadMain() {
             character->GetSkeleton()->setPositions(pv.first);
             character->GetSkeleton()->setVelocities(pv.second);
             character->GetSkeleton()->computeForwardKinematics(true, false, false);
-            setStatus("simulando");
+            setStatus("simulating");
         } catch (const std::exception& e) {
-            setStatus(std::string("build falhou: ") + e.what());
+            setStatus(std::string("build failed: ") + e.what());
             if (character) { delete character; character = nullptr; }
             return false;
         }
@@ -168,7 +168,7 @@ void SimBridge::threadMain() {
                     }
                     t = world->getTime();
                 }
-            } catch (...) { setStatus("passo falhou (NaN?) - pausado"); mPaused.store(true); }
+            } catch (...) { setStatus("step failed (NaN?) - paused"); mPaused.store(true); }
         }
         mSimTime.store(t);
         publish();
@@ -176,7 +176,7 @@ void SimBridge::threadMain() {
     }
 
     if (character) delete character;
-    setStatus("parado");
+    setStatus("stopped");
     mRunning.store(false);
 }
 

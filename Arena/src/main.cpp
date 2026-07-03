@@ -115,11 +115,14 @@ int main(int argc, char** argv) {
     if (!app.init(win)) return 1;
 
     // optional: open a .mass passed as the first argument
-    if (argc >= 2) {
-        std::string a = argv[1];
-        if (a.size() > 5 && a.substr(a.size()-5) == ".mass")
-            app.loadProjectPath(a);
+    bool genSkin = false;
+    for (int i = 1; i < argc; i++) {
+        std::string a = argv[i];
+        if (a.size() > 5 && a.substr(a.size()-5) == ".mass") app.loadProjectPath(a);
+        else if (a == "--skin") genSkin = true;
+        else if (a == "--sim") app.startKinematicSim();
     }
+    if (genSkin) app.generateSkin();
 
     while (!glfwWindowShouldClose(win)) {
         glfwPollEvents();

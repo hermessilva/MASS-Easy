@@ -26,29 +26,29 @@ static bool editText(const char* label, std::string& s) {
 
 void App::drawMenuBar() {
     if (ImGui::BeginMenuBar()) {
-        if (ImGui::BeginMenu("Arquivo")) {
-            if (ImGui::MenuItem("Novo")) newModel();
-            if (ImGui::MenuItem("Abrir .mass...", "Ctrl+O")) openMass();
-            if (ImGui::MenuItem("Salvar", "Ctrl+S")) saveMass(false);
-            if (ImGui::MenuItem("Salvar como...")) saveMass(true);
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New")) newModel();
+            if (ImGui::MenuItem("Open .mass...", "Ctrl+O")) openMass();
+            if (ImGui::MenuItem("Save", "Ctrl+S")) saveMass(false);
+            if (ImGui::MenuItem("Save As...")) saveMass(true);
             ImGui::Separator();
-            if (ImGui::MenuItem("Importar de metadata.txt (bootstrap)")) bootstrap();
-            if (ImGui::MenuItem("Exportar para treino (human.xml/muscle284.xml/metadata)")) exportLegacy();
+            if (ImGui::MenuItem("Import from metadata.txt (bootstrap)")) bootstrap();
+            if (ImGui::MenuItem("Export for training (human.xml/muscle284.xml/metadata)")) exportLegacy();
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Editar")) {
-            if (ImGui::MenuItem("Desfazer", "Ctrl+Z")) undo();
-            if (ImGui::MenuItem("Refazer", "Ctrl+Y")) redo();
+        if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem("Undo", "Ctrl+Z")) undo();
+            if (ImGui::MenuItem("Redo", "Ctrl+Y")) redo();
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Anatomia")) {
-            if (ImGui::MenuItem("Importar atlas OpenSim (.osim)...")) importOsim();
-            if (ImGui::MenuItem("Espelhar musculo L<->R")) mirrorSelectedMuscle();
+        if (ImGui::BeginMenu("Anatomy")) {
+            if (ImGui::MenuItem("Import OpenSim atlas (.osim)...")) importOsim();
+            if (ImGui::MenuItem("Mirror muscle L<->R")) mirrorSelectedMuscle();
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Ver")) {
-            ImGui::MenuItem("Grade", nullptr, &mDrawGrid);
-            ImGui::MenuItem("Musculos", nullptr, &mShowMuscles);
+        if (ImGui::BeginMenu("View")) {
+            ImGui::MenuItem("Floor", nullptr, &mDrawGrid);
+            ImGui::MenuItem("Muscles", nullptr, &mShowMuscles);
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -56,50 +56,50 @@ void App::drawMenuBar() {
 }
 
 void App::drawToolbar() {
-    ImGui::Begin("Ferramentas");
+    ImGui::Begin("Tools");
     ImGui::Text("Gizmo:");
-    if (ImGui::RadioButton("Mover", mGizmoOp == 7)) mGizmoOp = 7;    // TRANSLATE
+    if (ImGui::RadioButton("Move", mGizmoOp == 7)) mGizmoOp = 7;    // TRANSLATE
     ImGui::SameLine();
-    if (ImGui::RadioButton("Rotacionar", mGizmoOp == 56)) mGizmoOp = 56; // ROTATE
+    if (ImGui::RadioButton("Rotate", mGizmoOp == 56)) mGizmoOp = 56; // ROTATE
     ImGui::SameLine();
-    if (ImGui::RadioButton("Escalar", mGizmoOp == 896)) mGizmoOp = 896;  // SCALE
-    if (ImGui::RadioButton("Mundo", mGizmoMode == 1)) mGizmoMode = 1;
+    if (ImGui::RadioButton("Scale", mGizmoOp == 896)) mGizmoOp = 896;  // SCALE
+    if (ImGui::RadioButton("World", mGizmoMode == 1)) mGizmoMode = 1;
     ImGui::SameLine();
     if (ImGui::RadioButton("Local", mGizmoMode == 0)) mGizmoMode = 0;
     ImGui::Separator();
     if (ImGui::Button("+ Body")) addBody();
     ImGui::SameLine();
-    if (ImGui::Button("Remover")) removeSelected();
-    if (ImGui::Button("Duplicar musculo")) duplicateSelectedMuscle();
+    if (ImGui::Button("Remove")) removeSelected();
+    if (ImGui::Button("Duplicate muscle")) duplicateSelectedMuscle();
     ImGui::SameLine();
-    if (ImGui::Button("Espelhar L<->R")) mirrorSelectedMuscle();
+    if (ImGui::Button("Mirror L<->R")) mirrorSelectedMuscle();
 
-    ImGui::SeparatorText("Simulacao DART (ao vivo)");
-    if (ImGui::Button(mSimActive ? "Parar" : "Simular")) toggleSim();
+    ImGui::SeparatorText("DART simulation (live)");
+    if (ImGui::Button(mSimActive ? "Stop" : "Simulate")) toggleSim();
     if (mSimActive) {
         ImGui::SameLine();
         if (ImGui::Button("Reset")) mSim.requestReset();
         int md = mSim.mode();
-        if (ImGui::RadioButton("Cinematico (BVH)", md == SimBridge::Kinematic)) mSim.setMode(SimBridge::Kinematic);
+        if (ImGui::RadioButton("Kinematic (BVH)", md == SimBridge::Kinematic)) mSim.setMode(SimBridge::Kinematic);
         ImGui::SameLine();
-        if (ImGui::RadioButton("Dinamico (fisica)", md == SimBridge::Dynamic)) mSim.setMode(SimBridge::Dynamic);
+        if (ImGui::RadioButton("Dynamic (physics)", md == SimBridge::Dynamic)) mSim.setMode(SimBridge::Dynamic);
         bool paused = mSim.paused();
-        if (ImGui::Checkbox("Pausar", &paused)) mSim.setPaused(paused);
-        if (ImGui::SliderFloat("Ativacao muscular", &mActivation, 0.0f, 1.0f)) mSim.setActivation(mActivation);
+        if (ImGui::Checkbox("Pause", &paused)) mSim.setPaused(paused);
+        if (ImGui::SliderFloat("Muscle activation", &mActivation, 0.0f, 1.0f)) mSim.setActivation(mActivation);
         ImGui::Text("t = %.2fs  |  %s", mSim.simTime(), mSim.status().c_str());
     }
     ImGui::End();
 }
 
 void App::drawTree() {
-    ImGui::Begin("Cena");
-    if (ImGui::CollapsingHeader("Visibilidade", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImGui::Begin("Scene");
+    if (ImGui::CollapsingHeader("Visibility", ImGuiTreeNodeFlags_DefaultOpen)) {
         struct { const char* label; bool* v; } items[] = {
-            {"Ossos##vis", &mShowBones}, {"Musculos##vis", &mShowMuscles},
-            {"Juntas##vis", &mShowJoints}, {"Waypoints##vis", &mShowWaypoints},
-            {"Luzes##vis", &mShowLightMarkers}, {"Piso##vis", &mDrawGrid},
-            {"Malhas##vis", &mShowMesh}, {"Volume musc##vis", &mMuscleVolume},
-            {"Pele##vis", &mShowSkin},
+            {"Bones##vis", &mShowBones}, {"Muscles##vis", &mShowMuscles},
+            {"Joints##vis", &mShowJoints}, {"Waypoints##vis", &mShowWaypoints},
+            {"Lights##vis", &mShowLightMarkers}, {"Floor##vis", &mDrawGrid},
+            {"Meshes##vis", &mShowMesh}, {"Muscle vol##vis", &mMuscleVolume},
+            {"Skin##vis", &mShowSkin},
         };
         const int n = (int)(sizeof(items)/sizeof(items[0]));
         ImGuiStyle& st = ImGui::GetStyle();
@@ -114,7 +114,7 @@ void App::drawTree() {
             }
         }
     }
-    if (ImGui::CollapsingHeader("Esqueleto", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("Skeleton", ImGuiTreeNodeFlags_DefaultOpen)) {
         for (int i = 0; i < (int)mModel.skeleton.size(); i++) {
             const Node& n = mModel.skeleton[i];
             bool sel = ((mSel.type==SelType::Body||mSel.type==SelType::Joint) && mSel.index==i);
@@ -125,8 +125,8 @@ void App::drawTree() {
             ImGui::PopID();
         }
     }
-    if (ImGui::CollapsingHeader("Musculos")) {
-        ImGui::Text("%d musculos", (int)mModel.muscles.size());
+    if (ImGui::CollapsingHeader("Muscles")) {
+        ImGui::Text("%d muscles", (int)mModel.muscles.size());
         ImGui::BeginChild("mlist", ImVec2(0, 300));
         for (int i = 0; i < (int)mModel.muscles.size(); i++) {
             bool sel = ((mSel.type==SelType::Muscle||mSel.type==SelType::Waypoint) && mSel.index==i);
@@ -141,31 +141,30 @@ void App::drawTree() {
 }
 
 void App::drawProperties() {
-    ImGui::Begin("Propriedades");
+    ImGui::Begin("Properties");
     if (Node* n = selNode()) {
         ImGui::TextColored(ImVec4(1,0.8f,0.2f,1), "Node: %s", n->id.c_str());
-        bool ch = false;
-        ch |= editText("id", n->id);
-        ch |= editText("parent", n->parent);
+        editText("id", n->id);
+        editText("parent", n->parent);
         ImGui::Checkbox("end-effector", &n->endeffector);
         ImGui::SeparatorText("Body");
         const char* btypes[] = {"Box","Sphere","Capsule"};
         int bcur = 0; for (int k=0;k<3;k++) if (n->body.type==btypes[k]) bcur=k;
-        if (ImGui::Combo("tipo corpo", &bcur, btypes, 3)) n->body.type = btypes[bcur];
+        if (ImGui::Combo("body type", &bcur, btypes, 3)) n->body.type = btypes[bcur];
         float mass = (float)n->body.mass;
-        if (ImGui::DragFloat("massa (kg)", &mass, 0.1f, 0.01f, 500.0f)) n->body.mass = mass;
+        if (ImGui::DragFloat("mass (kg)", &mass, 0.1f, 0.01f, 500.0f)) n->body.mass = mass;
         if (n->body.type == "Box") editVec3("size", n->body.size);
         else { float r=(float)n->body.radius; if(ImGui::DragFloat("radius",&r,0.005f)) n->body.radius=r; }
         ImGui::Checkbox("contact", &n->body.contact);
         float col[4]={(float)n->body.color[0],(float)n->body.color[1],(float)n->body.color[2],(float)n->body.color[3]};
-        if (ImGui::ColorEdit4("cor", col)) n->body.color={col[0],col[1],col[2],col[3]};
+        if (ImGui::ColorEdit4("color", col)) n->body.color={col[0],col[1],col[2],col[3]};
         editText("obj", n->body.obj);
         editVec3("body pos", n->body.t.translation);
         ImGui::SeparatorText("Joint");
         const char* types[] = {"Free","Ball","Revolute","Weld","Planar"};
         int cur = 1;
         for (int k=0;k<5;k++) if (n->joint.type==types[k]) cur=k;
-        if (ImGui::Combo("tipo junta", &cur, types, 5)) n->joint.type = types[cur];
+        if (ImGui::Combo("joint type", &cur, types, 5)) n->joint.type = types[cur];
         editText("bvh", n->joint.bvh);
         if (n->joint.type=="Ball") { editVec3("lower", n->joint.lower); editVec3("upper", n->joint.upper); }
         else if (n->joint.type=="Revolute") {
@@ -176,8 +175,8 @@ void App::drawProperties() {
         }
         editVec3("joint pos", n->joint.t.translation);
     } else if (Muscle* mu = selMuscle()) {
-        ImGui::TextColored(ImVec4(1,1,0.3f,1), "Musculo: %s", mu->name.c_str());
-        editText("nome", mu->name);
+        ImGui::TextColored(ImVec4(1,1,0.3f,1), "Muscle: %s", mu->name.c_str());
+        editText("name", mu->name);
         ImGui::SeparatorText("Hill");
         float f0=(float)mu->f0, lm=(float)mu->lm, lt=(float)mu->lt, pa=(float)mu->pen_angle;
         if(ImGui::DragFloat("f0 (N)",&f0,1.0f,0.0f,5000.0f)) mu->f0=f0;
@@ -188,12 +187,12 @@ void App::drawProperties() {
         if(ImGui::DragFloat("PCSA (cm2)",&pcsa,0.1f,0.0f,300.0f)) {
             mu->pcsa_cm2=pcsa; mu->f0 = pcsa * mModel.meta.specific_tension_N_cm2; // f0 = sigma*PCSA
         }
-        ImGui::SeparatorText("Anatomia");
+        ImGui::SeparatorText("Anatomy");
         editText("latin", mu->latin);
         editText("pt", mu->pt);
-        editText("grupo", mu->group);
-        editText("lado (L/R)", mu->side);
-        editText("antagonista", mu->antagonist);
+        editText("group", mu->group);
+        editText("side (L/R)", mu->side);
+        editText("antagonist", mu->antagonist);
         ImGui::SeparatorText("Waypoints");
         for (int k=0;k<(int)mu->waypoints.size();k++) {
             ImGui::PushID(k);
@@ -203,37 +202,36 @@ void App::drawProperties() {
             ImGui::PopID();
         }
     } else {
-        ImGui::TextDisabled("Nada selecionado.");
-        ImGui::TextWrapped("Clique num osso, junta (botao direito na arvore) ou musculo.");
+        ImGui::TextDisabled("Nothing selected.");
+        ImGui::TextWrapped("Click a bone, a joint (right-click in the tree) or a muscle.");
     }
     ImGui::End();
 }
 
 void App::drawValidation() {
-    ImGui::Begin("Validacao anatomica");
+    ImGui::Begin("Anatomy check");
     int problems = 0;
     for (const auto& mu : mModel.muscles) {
         if (mu.waypoints.size() < 2) { ImGui::TextColored(ImVec4(1,0.4f,0.3f,1), "%s: <2 waypoints", mu.name.c_str()); problems++; }
-        // origin/insertion bodies exist
         for (const auto& w : {mu.waypoints.front(), mu.waypoints.back()}) {
             if (mModel.findNode(w.body) == nullptr) {
-                ImGui::TextColored(ImVec4(1,0.4f,0.3f,1), "%s: body '%s' inexistente", mu.name.c_str(), w.body.c_str()); problems++;
+                ImGui::TextColored(ImVec4(1,0.4f,0.3f,1), "%s: body '%s' missing", mu.name.c_str(), w.body.c_str()); problems++;
             }
         }
         double fmax = mu.pcsa_cm2 * mModel.meta.specific_tension_N_cm2;
         if (mu.pcsa_cm2 > 0 && std::fabs(fmax - mu.f0) > 1.0)
             { ImGui::TextColored(ImVec4(0.9f,0.8f,0.2f,1), "%s: f0 != sigma*PCSA", mu.name.c_str()); problems++; }
     }
-    if (problems == 0) ImGui::TextColored(ImVec4(0.3f,1,0.4f,1), "Sem problemas detectados.");
+    if (problems == 0) ImGui::TextColored(ImVec4(0.3f,1,0.4f,1), "No problems detected.");
     ImGui::End();
 }
 
 void App::drawAtlas() {
-    ImGui::Begin("Atlas anatomico (OpenSim)");
-    if (ImGui::Button("Importar .osim...")) importOsim();
+    ImGui::Begin("Atlas (OpenSim)");
+    if (ImGui::Button("Import .osim...")) importOsim();
     ImGui::SameLine();
     ImGui::TextDisabled("%d refs", (int)mAtlas.size());
-    ImGui::InputText("filtro", mAtlasFilter, sizeof(mAtlasFilter));
+    ImGui::InputText("filter", mAtlasFilter, sizeof(mAtlasFilter));
     ImGui::Separator();
     ImGui::BeginChild("atlaslist");
     std::string flt = mAtlasFilter;
@@ -249,7 +247,7 @@ void App::drawAtlas() {
         ImGui::SameLine();
         ImGui::TextDisabled("f0=%.0f pen=%.2f", a.f0, a.pen_angle);
         ImGui::SameLine();
-        if (ImGui::SmallButton("aplicar")) applyAtlas(a);
+        if (ImGui::SmallButton("apply")) applyAtlas(a);
         ImGui::PopID();
     }
     ImGui::EndChild();
@@ -257,45 +255,61 @@ void App::drawAtlas() {
 }
 
 void App::drawTrain() {
-    ImGui::Begin("Treino (PPO)");
-    ImGui::Text("Telemetria: %s", mTrain.status().c_str());
-    ImGui::Text("Cliente: %s", mTrain.clientConnected() ? "CONECTADO" : "aguardando...");
+    ImGui::Begin("Training (PPO)");
+    ImGui::Text("Telemetry: %s", mTrain.status().c_str());
+    ImGui::Text("Client: %s", mTrain.clientConnected() ? "CONNECTED" : "waiting...");
     ImGui::Separator();
     Telemetry t = mTrain.latest();
-    ImGui::Text("Iteracao : %d", t.iteration);
-    ImGui::Text("Reward   : %.3f", t.reward);
+    ImGui::Text("Iteration : %d", t.iteration);
+    ImGui::Text("Reward    : %.3f", t.reward);
     ImGui::Text("Loss A/C/M: %.3f / %.4f / %.3f", t.loss_actor, t.loss_critic, t.loss_muscle);
     auto rh = mTrain.rewardHistory();
     if (!rh.empty())
         ImGui::PlotLines("reward", rh.data(), (int)rh.size(), 0, nullptr, 0.0f, 1.0f, ImVec2(0, 120));
     ImGui::Separator();
     if (!mTrain.trainingRunning()) {
-        if (ImGui::Button("Exportar p/ data + treinar")) startTraining();
-        ImGui::TextDisabled("(sobrescreve data/human.xml, muscle284.xml, metadata.txt)");
+        if (ImGui::Button("Export to data + train")) startTraining();
+        ImGui::TextDisabled("(overwrites data/human.xml, muscle284.xml, metadata.txt)");
     } else {
-        if (ImGui::Button("Parar treino")) mTrain.stopTraining();
+        if (ImGui::Button("Stop training")) mTrain.stopTraining();
     }
     ImGui::End();
 }
 
-void App::drawLights() {
-    ImGui::Begin("Luzes");
-    float amb = (float)mModel.ambient;
-    if (ImGui::SliderFloat("Ambiente", &amb, 0.0f, 2.0f)) mModel.ambient = amb;
+void App::drawSkinPanel() {
+    ImGui::Begin("Skin");
+    ImGui::TextWrapped("Continuous skin generated by inference (metaballs + marching cubes) over the anatomy.");
+    ImGui::Checkbox("Show skin", &mShowSkin);
+    ImGui::SeparatorText("Parameters (inference)");
+    ImGui::SliderFloat("Thickness (m)", &mSkinParams.inflate, 0.0f, 0.06f, "%.3f");
+    ImGui::SliderFloat("Fusion smoothness", &mSkinParams.smooth, 0.0f, 0.15f, "%.3f");
+    ImGui::SliderFloat("Body scale", &mSkinParams.bodyScale, 0.8f, 1.6f, "%.2f");
+    ImGui::SliderFloat("Resolution (m/cell)", &mSkinParams.cell, 0.008f, 0.04f, "%.3f");
+    ImGui::TextDisabled("smaller = more detail, slower");
     ImGui::Separator();
-    if (ImGui::Button("+ Direcional")) {
-        Light l; l.name = "Direcional " + std::to_string(mModel.lights.size());
+    if (ImGui::Button("Generate skin", ImVec2(-1, 0))) regenerateSkin();
+    ImGui::TextDisabled("Tip: turn off Bones/Muscles to see only the skin.");
+    ImGui::End();
+}
+
+void App::drawLights() {
+    ImGui::Begin("Lights");
+    float amb = (float)mModel.ambient;
+    if (ImGui::SliderFloat("Ambient", &amb, 0.0f, 2.0f)) mModel.ambient = amb;
+    ImGui::Separator();
+    if (ImGui::Button("+ Directional")) {
+        Light l; l.name = "Directional " + std::to_string(mModel.lights.size());
         l.type = 0; l.dir = {0.3, 0.8, 0.4}; mModel.lights.push_back(l);
         mSelLight = (int)mModel.lights.size()-1; mSel = {SelType::Light, mSelLight, -1};
     }
     ImGui::SameLine();
-    if (ImGui::Button("+ Ponto")) {
-        Light l; l.name = "Ponto " + std::to_string(mModel.lights.size());
+    if (ImGui::Button("+ Point")) {
+        Light l; l.name = "Point " + std::to_string(mModel.lights.size());
         l.type = 1; l.dir = {0.0, 2.0, 1.5}; mModel.lights.push_back(l);
         mSelLight = (int)mModel.lights.size()-1; mSel = {SelType::Light, mSelLight, -1};
     }
     ImGui::SameLine();
-    if (ImGui::Button("Remover") && mSelLight >= 0 && mSelLight < (int)mModel.lights.size()) {
+    if (ImGui::Button("Remove") && mSelLight >= 0 && mSelLight < (int)mModel.lights.size()) {
         mModel.lights.erase(mModel.lights.begin() + mSelLight); mSelLight = -1;
     }
     ImGui::Separator();
@@ -305,26 +319,26 @@ void App::drawLights() {
         bool en = L.enabled;
         if (ImGui::Checkbox("##en", &en)) L.enabled = en;
         ImGui::SameLine();
-        if (ImGui::Selectable((L.name + (L.type ? "  (ponto)" : "  (dir)")).c_str(), mSelLight == i)) {
+        if (ImGui::Selectable((L.name + (L.type ? "  (point)" : "  (dir)")).c_str(), mSelLight == i)) {
             mSelLight = i; mSel = {SelType::Light, i, -1};
         }
         ImGui::PopID();
     }
     if (mSelLight >= 0 && mSelLight < (int)mModel.lights.size()) {
         Light& L = mModel.lights[mSelLight];
-        ImGui::SeparatorText("Propriedades da luz");
+        ImGui::SeparatorText("Light properties");
         char buf[128]; std::strncpy(buf, L.name.c_str(), sizeof(buf)-1); buf[sizeof(buf)-1]=0;
-        if (ImGui::InputText("nome", buf, sizeof(buf))) L.name = buf;
+        if (ImGui::InputText("name", buf, sizeof(buf))) L.name = buf;
         int ty = L.type;
-        const char* tys[] = {"Direcional", "Ponto"};
-        if (ImGui::Combo("tipo", &ty, tys, 2)) L.type = ty;
-        ImGui::Checkbox("ativa", &L.enabled);
+        const char* tys[] = {"Directional", "Point"};
+        if (ImGui::Combo("type", &ty, tys, 2)) L.type = ty;
+        ImGui::Checkbox("enabled", &L.enabled);
         float col[3] = {(float)L.color[0], (float)L.color[1], (float)L.color[2]};
-        if (ImGui::ColorEdit3("cor", col)) L.color = {col[0], col[1], col[2]};
+        if (ImGui::ColorEdit3("color", col)) L.color = {col[0], col[1], col[2]};
         float inten = (float)L.intensity;
-        if (ImGui::SliderFloat("intensidade", &inten, 0.0f, 4.0f)) L.intensity = inten;
+        if (ImGui::SliderFloat("intensity", &inten, 0.0f, 4.0f)) L.intensity = inten;
         float d[3] = {(float)L.dir[0], (float)L.dir[1], (float)L.dir[2]};
-        if (ImGui::DragFloat3(L.type ? "posicao" : "direcao", d, 0.02f)) L.dir = {d[0], d[1], d[2]};
+        if (ImGui::DragFloat3(L.type ? "position" : "direction", d, 0.02f)) L.dir = {d[0], d[1], d[2]};
     }
     ImGui::End();
 }
@@ -366,13 +380,14 @@ void App::frame() {
         right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.26f, nullptr, &center);
         ImGuiID leftBottom = ImGui::DockBuilderSplitNode(left, ImGuiDir_Down, 0.55f, nullptr, &left);
         ImGuiID rightBottom = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.5f, nullptr, &right);
-        ImGui::DockBuilderDockWindow("Cena", left);
-        ImGui::DockBuilderDockWindow("Propriedades", leftBottom);
-        ImGui::DockBuilderDockWindow("Ferramentas", right);
-        ImGui::DockBuilderDockWindow("Treino (PPO)", rightBottom);
-        ImGui::DockBuilderDockWindow("Atlas anatomico (OpenSim)", rightBottom);
-        ImGui::DockBuilderDockWindow("Validacao anatomica", rightBottom);
-        ImGui::DockBuilderDockWindow("Luzes", leftBottom);
+        ImGui::DockBuilderDockWindow("Scene", left);
+        ImGui::DockBuilderDockWindow("Properties", leftBottom);
+        ImGui::DockBuilderDockWindow("Tools", right);
+        ImGui::DockBuilderDockWindow("Training (PPO)", rightBottom);
+        ImGui::DockBuilderDockWindow("Atlas (OpenSim)", rightBottom);
+        ImGui::DockBuilderDockWindow("Anatomy check", rightBottom);
+        ImGui::DockBuilderDockWindow("Lights", leftBottom);
+        ImGui::DockBuilderDockWindow("Skin", rightBottom);
         ImGui::DockBuilderDockWindow("Viewport", center);
         ImGui::DockBuilderFinish(dockId);
     }
@@ -385,6 +400,7 @@ void App::frame() {
     drawAtlas();
     drawTrain();
     drawLights();
+    drawSkinPanel();
 
     // viewport window: render 3D to FBO, then show as an image (no compositing issues)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));

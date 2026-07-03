@@ -50,7 +50,7 @@ private:
     std::mutex mMx;
     Model mPending;                                   // guarded
     std::map<std::string, Transform> mPose;           // guarded
-    std::string mStatus = "parado";                   // guarded
+    std::string mStatus = "stopped";                   // guarded
 };
 
 } // namespace mass

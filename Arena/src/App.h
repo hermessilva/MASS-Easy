@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "SimBridge.h"
 #include "TrainBridge.h"
+#include "SkinGen.h"
 #include <vector>
 #include <string>
 #include <deque>
@@ -30,6 +31,8 @@ public:
     void frame();           // one UI+render frame
     void shutdown();
     void loadProjectPath(const std::string& path); // load a specific .mass
+    void generateSkin();                            // generate the skin now (public trigger)
+    void startKinematicSim();                        // start live BVH playback (public trigger)
 
 private:
     GLFWwindow* mWin = nullptr;
@@ -38,7 +41,7 @@ private:
     Renderer mRen;
     Selection mSel;
     std::string mProjectPath;      // current .mass path
-    std::string mStatus = "Pronto";
+    std::string mStatus = "Ready";
     bool mDrawGrid = false;
     bool mShowMuscles = true;
     bool mShowBones = true;
@@ -47,8 +50,15 @@ private:
     bool mShowLightMarkers = false;
     bool mShowMesh = true;      // render OBJ body meshes instead of boxes
     bool mMuscleVolume = true;  // render muscles as fusiform volume tubes (not lines)
-    bool mShowSkin = false;     // skin envelope (placeholder; real skin = marching-cubes)
+    bool mShowSkin = false;     // continuous skin (marching-cubes)
+    SkinParams mSkinParams;
     void drawMuscleTube(const Muscle& mu, const V3& color);
+    void regenerateSkin();
+    void drawSkinPanel();
+    // skin skinning: each vertex bound to nearest body, stored in that body's local space
+    std::vector<V3> mSkinLocalPos, mSkinLocalNrm;
+    std::vector<int> mSkinBone;
+    void updateSkinPose();   // rebuild live skin verts from current body transforms
 
     std::vector<MeshData> mMeshes;  // per-node visual meshes (OBJ), rest world space
     void loadMeshes();

@@ -22,7 +22,7 @@ struct TrainBridge::Impl {
         acceptor->async_accept(*socket, [this](boost::system::error_code ec) {
             if (!ec) {
                 owner->setConnected(true);
-                owner->setStatus("cliente de treino conectado");
+                owner->setStatus("training client connected");
                 doRead();
             } else {
                 doAccept();
@@ -34,7 +34,7 @@ struct TrainBridge::Impl {
             [this](boost::system::error_code ec, std::size_t n) {
                 if (ec) {
                     owner->setConnected(false);
-                    owner->setStatus("cliente desconectado");
+                    owner->setStatus("client disconnected");
                     boost::system::error_code ig; socket->close(ig);
                     doAccept();
                     return;
@@ -59,11 +59,11 @@ void TrainBridge::start(unsigned short port) {
             mImpl->io, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port));
         mImpl->doAccept();
     } catch (const std::exception& e) {
-        setStatus(std::string("erro ao abrir porta: ") + e.what());
+        setStatus(std::string("failed to open port: ") + e.what());
         return;
     }
     mRunning.store(true);
-    setStatus("servidor de telemetria em 127.0.0.1:" + std::to_string(port));
+    setStatus("telemetry server on 127.0.0.1:" + std::to_string(port));
     auto impl = mImpl;
     mThread = std::thread([impl]() { impl->io.run(); });
 }
@@ -114,9 +114,9 @@ void TrainBridge::launchTraining(const std::string& cmdline) {
         mTrainPid = pi.dwProcessId;
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
-        setStatus("treino iniciado (pid " + std::to_string(mTrainPid) + ")");
+        setStatus("training started (pid " + std::to_string(mTrainPid) + ")");
     } else {
-        setStatus("falha ao iniciar treino");
+        setStatus("failed to start training");
     }
 #endif
 }
