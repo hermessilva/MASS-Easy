@@ -12,6 +12,7 @@ Guia por tarefa do MASS (Muscle-Actuated Skeletal System) portado para Windows n
 | 4 | Treinar (PPO na GPU) | [04-Treinar.md](04-Treinar.md) |
 | 5 | Problemas comuns e soluções | [05-Troubleshooting.md](05-Troubleshooting.md) |
 | 6 | Arena — editor 3D unificado (esqueleto/músculos/movimento) | [06-Editor.md](06-Editor.md) |
+| — | MCP embarcado — estudo de design (co-edição, FK, índice, atlas, grooms) | [MCP-Study.md](MCP-Study.md) |
 
 ## Visão geral do projeto
 
