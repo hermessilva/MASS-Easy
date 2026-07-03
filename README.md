@@ -9,7 +9,7 @@ O MASS original é um simulador musculoesquelético de corpo inteiro controlado 
 O **MASS-Easy** mantém o motor de simulação e o pipeline de treino, e adiciona por cima:
 
 - ✅ **Build nativo no Windows** (MSVC + vcpkg + PyTorch CUDA) — sem WSL, sem Docker.
-- ✅ **Editor 3D unificado** — esqueleto, músculos e movimento numa só visão interativa em tempo real.
+- ✅ **Arena** — editor 3D unificado: esqueleto, músculos e movimento numa só visão interativa em tempo real.
 - ✅ **Formato de projeto único `.mass`** (JSON) que desmembra nos arquivos de treino.
 - 🚧 **Rumo à animação** — física DART ao vivo no editor, iluminação, malhas anatômicas reais; caminhando para um pipeline de animação de fato utilizável.
 
@@ -17,7 +17,7 @@ O **MASS-Easy** mantém o motor de simulação e o pipeline de treino, e adicion
 
 ---
 
-## O editor
+## Arena — o editor 3D
 
 Aplicação C++ nativa (GLFW + Dear ImGui + ImGuizmo + OpenGL) que edita os três elementos do modelo numa mesma cena 3D:
 
@@ -42,8 +42,8 @@ Pré-requisitos e setup completo em **[Docs/](Docs/README.md)**. Resumo:
 # 1. compilar tudo (core, binding python, viewer, editor) e empacotar em Dist\x64
 powershell -ExecutionPolicy Bypass -File scripts\build-dist.ps1
 
-# 2. abrir o editor 3D
-powershell -ExecutionPolicy Bypass -File scripts\editor.ps1
+# 2. abrir a Arena (editor 3D)
+powershell -ExecutionPolicy Bypass -File scripts\arena.ps1
 
 # 3. treinar (PPO na GPU)
 powershell -ExecutionPolicy Bypass -File scripts\train.ps1
@@ -61,7 +61,7 @@ Documentação por tarefa:
 | 3 | [Viewer](Docs/03-Executar-Viewer.md) |
 | 4 | [Treino](Docs/04-Treinar.md) |
 | 5 | [Troubleshooting](Docs/05-Troubleshooting.md) |
-| 6 | [Editor 3D](Docs/06-Editor.md) |
+| 6 | [Arena (editor 3D)](Docs/06-Editor.md) |
 
 ---
 
@@ -77,7 +77,7 @@ human.xml + muscle284.xml + metadata.txt + *.bvh  →  treino PPO (PyTorch/CUDA)
 - `core/` — biblioteca C++ `mss` (DART 6.15 + Bullet, músculos Hill, ambiente RL).
 - `python/` — módulo `pymss` (pybind11) + loop PPO (`main.py`, `Model.py`).
 - `render/` — viewer OpenGL do MASS original (roda modelos `.pt`).
-- `editor/` — o editor 3D unificado do MASS-Easy.
+- `editor/` — **Arena**, o editor 3D unificado do MASS-Easy (binário `arena.exe`).
 - `scripts/` — build/run em PowerShell. `Docs/` — guias por tarefa.
 
 ---

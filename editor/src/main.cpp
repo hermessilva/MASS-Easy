@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* win = glfwCreateWindow(1600, 950, "MASS Editor", nullptr, nullptr);
+    GLFWwindow* win = glfwCreateWindow(1600, 950, "Arena", nullptr, nullptr);
     if (!win) { std::fprintf(stderr, "window failed\n"); glfwTerminate(); return 1; }
     glfwMakeContextCurrent(win);
     glfwSwapInterval(1);

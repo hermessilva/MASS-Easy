@@ -42,8 +42,8 @@ Copy-Item "$renderOut\*.dll"      $dist -Force
 if (Test-Path "$pymssOut\pymss.cp310-win_amd64.pyd") {
     Copy-Item "$pymssOut\pymss.cp310-win_amd64.pyd" $dist -Force
 }
-if (Test-Path "$editorOut\mass_editor.exe") {
-    Copy-Item "$editorOut\mass_editor.exe" $dist -Force
+if (Test-Path "$editorOut\arena.exe") {
+    Copy-Item "$editorOut\arena.exe" $dist -Force
     Copy-Item "$editorOut\*.dll" $dist -Force -ErrorAction SilentlyContinue
 }
 

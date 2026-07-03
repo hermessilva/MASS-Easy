@@ -399,8 +399,12 @@ void App::frame() {
     bool hovered = ImGui::IsItemHovered();
     ImGuiIO& io = ImGui::GetIO();
     if (hovered && !ImGuizmo::IsUsing()) {
+        bool orbiting = ImGui::IsMouseDragging(ImGuiMouseButton_Left) && !ImGuizmo::IsOver();
+        // pivot orbit/zoom around the selected element's world point
+        if (mSel.type != SelType::None && (io.MouseWheel != 0 || orbiting))
+            mCam.target = selectionCenter();
         if (io.MouseWheel != 0) mCam.zoom(io.MouseWheel);
-        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && !ImGuizmo::IsOver())
+        if (orbiting)
             mCam.orbit(io.MouseDelta.x, io.MouseDelta.y);
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Right) || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
             mCam.pan(io.MouseDelta.x, io.MouseDelta.y);
@@ -419,6 +423,8 @@ void App::frame() {
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y)) redo();
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S)) saveMass(false);
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_O)) openMass();
+    if (io.KeyCtrl && (ImGui::IsKeyPressed(ImGuiKey_1) || ImGui::IsKeyPressed(ImGuiKey_Keypad1)))
+        resetView();  // reset camera + pose (top-row or numpad 1)
     if (ImGui::IsKeyPressed(ImGuiKey_Delete)) removeSelected();
 
     // status bar

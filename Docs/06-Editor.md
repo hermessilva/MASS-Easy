@@ -1,18 +1,18 @@
-# 6. Editor 3D unificado (esqueleto + músculos + movimento)
+# 6. Arena — editor 3D unificado (esqueleto + músculos + movimento)
 
-Editor nativo C++ (GLFW + Dear ImGui + ImGuizmo + OpenGL) que edita os três elementos numa só visão 3D em tempo real, com física DART ao vivo, fluxo de anatomista, e um arquivo-projeto único `.mass` que desmembra para os arquivos de treino.
+**Arena** é o editor nativo C++ (GLFW + Dear ImGui + ImGuizmo + OpenGL, binário `arena.exe`) que edita os três elementos numa só visão 3D em tempo real, com física DART ao vivo, fluxo de anatomista, e um arquivo-projeto único `.mass` que desmembra para os arquivos de treino.
 
 ## Rodar
 
 ```powershell
 cd D:\Tootega\Source\MASS
-powershell -ExecutionPolicy Bypass -File scripts\editor.ps1                 # abre data\human.mass
-powershell -ExecutionPolicy Bypass -File scripts\editor.ps1 -Mass meu.mass
+powershell -ExecutionPolicy Bypass -File scripts\arena.ps1                 # abre data\human.mass
+powershell -ExecutionPolicy Bypass -File scripts\arena.ps1 -Mass meu.mass
 ```
 
 Se ainda não existir `data\human.mass`, gere a partir dos arquivos atuais:
 ```powershell
-build\editor\Release\mass_editor.exe --tomass data\metadata.txt data\human.mass
+build\editor\Release\arena.exe --tomass data\metadata.txt data\human.mass
 ```
 
 ## Layout (janelas dockáveis)
@@ -70,7 +70,7 @@ No painel **Ferramentas → Simulacao**:
 
 ## CLI headless
 ```
-mass_editor.exe --tomass <metadata.txt> <out.mass>   # bootstrap -> .mass
-mass_editor.exe --roundtrip <metadata.txt> <outdir>  # bootstrap -> XML/metadata
-mass_editor.exe <projeto.mass>                        # abre na GUI
+arena.exe --tomass <metadata.txt> <out.mass>   # bootstrap -> .mass
+arena.exe --roundtrip <metadata.txt> <outdir>  # bootstrap -> XML/metadata
+arena.exe <projeto.mass>                        # abre na GUI
 ```

@@ -210,6 +210,55 @@ V3 App::liveWaypoint(const Waypoint& w) const {
     return V3(w.p);
 }
 
+V3 App::selectionCenter() const {
+    switch (mSel.type) {
+        case SelType::Body:
+        case SelType::Joint: {
+            if (mSel.index >= 0 && mSel.index < (int)mModel.skeleton.size()) {
+                const Node& n = mModel.skeleton[mSel.index];
+                if (mSel.type == SelType::Joint) return mulPoint(fromTransform(n.joint.t), {0,0,0});
+                return mulPoint(liveBodyMatrix(n), {0,0,0});
+            }
+        } break;
+        case SelType::Muscle: {
+            if (mSel.index >= 0 && mSel.index < (int)mModel.muscles.size()) {
+                const Muscle& mu = mModel.muscles[mSel.index];
+                if (!mu.waypoints.empty()) {
+                    V3 s{0,0,0};
+                    for (auto& w : mu.waypoints) s = s + liveWaypoint(w);
+                    return s * (1.0f / (float)mu.waypoints.size());
+                }
+            }
+        } break;
+        case SelType::Waypoint: {
+            const Muscle* mu = (mSel.index>=0 && mSel.index<(int)mModel.muscles.size()) ? &mModel.muscles[mSel.index] : nullptr;
+            if (mu && mSel.sub >= 0 && mSel.sub < (int)mu->waypoints.size())
+                return liveWaypoint(mu->waypoints[mSel.sub]);
+        } break;
+        case SelType::Light: {
+            if (mSel.index >= 0 && mSel.index < (int)mModel.lights.size())
+                return lightHandle(mModel.lights[mSel.index]);
+        } break;
+        default: break;
+    }
+    return mCam.target;
+}
+
+void App::resetView() {
+    // frame the character: default camera + target at model center
+    V3 center{0, 1.0f, 0};
+    if (!mModel.skeleton.empty()) {
+        V3 s{0,0,0};
+        for (const auto& n : mModel.skeleton) s = s + V3(n.body.t.translation);
+        center = s * (1.0f / (float)mModel.skeleton.size());
+    }
+    Camera def;                 // defaults (yaw/pitch/dist/fov)
+    def.target = center;
+    mCam = def;
+    if (mSimActive) mSim.requestReset();   // reposition the character too
+    mStatus = "Vista resetada";
+}
+
 void App::toggleSim() {
     if (mSimActive) {
         mSim.stop();
@@ -346,39 +395,46 @@ void App::pickAt(double mx, double my) {
     float best = 1e30f;
     Selection hit;
 
-    // lights (handles) — highest priority
-    for (int i = 0; i < (int)mModel.lights.size(); i++) {
+    // lights (handles) — only if their markers are visible
+    for (int i = 0; mShowLightMarkers && i < (int)mModel.lights.size(); i++) {
         float t = raySphere(ray, lightHandle(mModel.lights[i]), 0.14f);
         if (t > 0 && t < best) { best = t; hit = {SelType::Light, i, -1}; }
     }
 
-    // waypoints (small spheres)
-    for (int i = 0; i < (int)mModel.muscles.size() && mShowMuscles; i++) {
+    // waypoints (small spheres) — only if visible
+    for (int i = 0; mShowWaypoints && i < (int)mModel.muscles.size(); i++) {
         const Muscle& mu = mModel.muscles[i];
         for (int k = 0; k < (int)mu.waypoints.size(); k++) {
-            float t = raySphere(ray, worldOfWaypoint(mu.waypoints[k]), 0.02f);
+            float t = raySphere(ray, liveWaypoint(mu.waypoints[k]), 0.02f);
             if (t > 0 && t < best) { best = t; hit = {SelType::Waypoint, i, k}; }
         }
     }
-    // bodies (OBB)
-    for (int i = 0; i < (int)mModel.skeleton.size(); i++) {
+    // bodies — ray-cast against the ACTUAL mesh triangles (what you see); box fallback
+    for (int i = 0; mShowBones && i < (int)mModel.skeleton.size(); i++) {
         const Node& n = mModel.skeleton[i];
-        V3 he = n.body.type == "Box"
-            ? V3{(float)n.body.size[0]*0.5f, (float)n.body.size[1]*0.5f, (float)n.body.size[2]*0.5f}
-            : V3{(float)n.body.radius,(float)n.body.radius,(float)n.body.radius};
-        float t = rayOBB(ray, nodeBodyMatrix(n), he);
-        if (t > 0 && t < best) { best = t; hit = {SelType::Body, i, -1}; }
-    }
-    // muscle segments (thin) — only if nothing closer
-    if (hit.type == SelType::None && mShowMuscles) {
-        float bestDist = 0.03f;
-        for (int i = 0; i < (int)mModel.muscles.size(); i++) {
-            const Muscle& mu = mModel.muscles[i];
-            for (size_t k = 1; k < mu.waypoints.size(); k++) {
-                float tt;
-                float d = raySegmentDist(ray, worldOfWaypoint(mu.waypoints[k-1]), worldOfWaypoint(mu.waypoints[k]), tt);
-                if (d < bestDist) { bestDist = d; hit = {SelType::Muscle, i, -1}; }
+        const MeshData* md = (i < (int)mMeshes.size()) ? &mMeshes[i] : nullptr;
+        if (mShowMesh && md && md->gpuId != 0) {
+            M4 delta = mul(liveBodyMatrix(n), rigidInverse(fromTransform(n.body.t)));
+            const auto& P = md->pos;
+            for (size_t k = 0; k + 2 < P.size(); k += 3) {
+                float t = rayTriangle(ray, mulPoint(delta,P[k]), mulPoint(delta,P[k+1]), mulPoint(delta,P[k+2]));
+                if (t > 0 && t < best) { best = t; hit = {SelType::Body, i, -1}; }
             }
+        } else {
+            V3 he = n.body.type == "Box"
+                ? V3{(float)n.body.size[0]*0.5f, (float)n.body.size[1]*0.5f, (float)n.body.size[2]*0.5f}
+                : V3{(float)n.body.radius,(float)n.body.radius,(float)n.body.radius};
+            float t = rayOBB(ray, nodeBodyMatrix(n), he);
+            if (t > 0 && t < best) { best = t; hit = {SelType::Body, i, -1}; }
+        }
+    }
+    // muscle segments — compete by distance-along-ray so a muscle in front wins over the bone
+    for (int i = 0; mShowMuscles && i < (int)mModel.muscles.size(); i++) {
+        const Muscle& mu = mModel.muscles[i];
+        for (size_t k = 1; k < mu.waypoints.size(); k++) {
+            float tt;
+            float d = raySegmentDist(ray, liveWaypoint(mu.waypoints[k-1]), liveWaypoint(mu.waypoints[k]), tt);
+            if (d < 0.012f && tt > 0 && tt < best) { best = tt; hit = {SelType::Muscle, i, -1}; }
         }
     }
     mSel = hit;

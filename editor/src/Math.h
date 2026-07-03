@@ -125,6 +125,23 @@ inline float rayOBB(const Ray& ray, const M4& model, const V3& he){
     return tmin>0?tmin:(tmax>0?tmax:-1);
 }
 
+// ray vs triangle (Moller-Trumbore); returns t>0 or -1
+inline float rayTriangle(const Ray& ray, const V3& a, const V3& b, const V3& c){
+    V3 e1 = b - a, e2 = c - a;
+    V3 p = cross(ray.d, e2);
+    float det = dot(e1, p);
+    if (std::fabs(det) < 1e-9f) return -1;
+    float inv = 1.0f/det;
+    V3 tv = ray.o - a;
+    float u = dot(tv, p) * inv;
+    if (u < 0 || u > 1) return -1;
+    V3 q = cross(tv, e1);
+    float v = dot(ray.d, q) * inv;
+    if (v < 0 || u + v > 1) return -1;
+    float t = dot(e2, q) * inv;
+    return t > 1e-5f ? t : -1;
+}
+
 // ray vs sphere at center c, radius r
 inline float raySphere(const Ray& ray, const V3& c, float r){
     V3 oc = ray.o - c;

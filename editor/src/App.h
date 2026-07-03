@@ -39,12 +39,12 @@ private:
     Selection mSel;
     std::string mProjectPath;      // current .mass path
     std::string mStatus = "Pronto";
-    bool mDrawGrid = true;
+    bool mDrawGrid = false;
     bool mShowMuscles = true;
     bool mShowBones = true;
     bool mShowJoints = false;
     bool mShowWaypoints = false;
-    bool mShowLightMarkers = true;
+    bool mShowLightMarkers = false;
     bool mShowMesh = true;   // render OBJ body meshes instead of boxes
 
     std::vector<MeshData> mMeshes;  // per-node visual meshes (OBJ), rest world space
@@ -77,6 +77,8 @@ private:
     V3 worldOfWaypoint(const Waypoint& w) const;
     M4 nodeBodyMatrix(const Node& n) const;
     V3 lightHandle(const Light& L) const;   // 3D position of a light's handle
+    V3 selectionCenter() const;             // world center of the current selection
+    void resetView();                       // reset camera + pose (Ctrl+1)
 
     // picking
     void pickAt(double mx, double my);

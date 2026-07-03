@@ -119,12 +119,21 @@ void SimBridge::threadMain() {
         return true;
     };
 
+    auto clockLast = std::chrono::steady_clock::now();
+    double accumulator = 0.0;
+
     while (!mStop.load()) {
-        if (mRebuild.exchange(false)) rebuild();
-        if (!character) { std::this_thread::sleep_for(std::chrono::milliseconds(30)); continue; }
+        if (mRebuild.exchange(false)) { rebuild(); clockLast = std::chrono::steady_clock::now(); accumulator = 0.0; }
+        if (!character) { std::this_thread::sleep_for(std::chrono::milliseconds(30)); clockLast = std::chrono::steady_clock::now(); continue; }
+
+        // real elapsed time drives the sim (stable, real-time), clamped against stalls
+        auto now = std::chrono::steady_clock::now();
+        double realDt = std::chrono::duration<double>(now - clockLast).count();
+        clockLast = now;
+        if (realDt > 0.1) realDt = 0.1;
 
         if (mReset.exchange(false)) {
-            t = 0.0;
+            t = 0.0; accumulator = 0.0;
             auto pv = character->GetTargetPosAndVel(t, conDt);
             character->GetSkeleton()->setPositions(pv.first);
             character->GetSkeleton()->setVelocities(pv.second);
@@ -134,20 +143,29 @@ void SimBridge::threadMain() {
         if (!mPaused.load()) {
             try {
                 if (mMode.load() == Kinematic) {
-                    t += dt;
+                    t += realDt;   // real-time playback
                     auto pv = character->GetTargetPosAndVel(t, conDt);
-                    character->GetSkeleton()->setPositions(pv.first);
+                    Eigen::VectorXd p = pv.first;
+                    // treadmill: keep root over the origin so it walks in place (not off the floor).
+                    // DART FreeJoint dofs: [0..2]=rotation, [3..5]=translation(x,y,z). Zero x,z.
+                    if (p.rows() >= 6) { p[3] = 0.0; p[5] = 0.0; }
+                    character->GetSkeleton()->setPositions(p);
                     character->GetSkeleton()->computeForwardKinematics(true, false, false);
-                } else { // Dynamic
-                    if (useMuscle) {
-                        float a = mActivation.load();
-                        for (auto muscle : character->GetMuscles()) {
-                            muscle->activation = a;
-                            muscle->Update();
-                            muscle->ApplyForceToBody();
+                } else { // Dynamic — fixed-timestep accumulator for stability
+                    accumulator += realDt;
+                    int steps = 0;
+                    while (accumulator >= dt && steps < 20) {
+                        if (useMuscle) {
+                            float a = mActivation.load();
+                            for (auto muscle : character->GetMuscles()) {
+                                muscle->activation = a;
+                                muscle->Update();
+                                muscle->ApplyForceToBody();
+                            }
                         }
+                        world->step();
+                        accumulator -= dt; steps++;
                     }
-                    world->step();
                     t = world->getTime();
                 }
             } catch (...) { setStatus("passo falhou (NaN?) - pausado"); mPaused.store(true); }
