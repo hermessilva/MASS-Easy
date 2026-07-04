@@ -38,17 +38,20 @@ Open `MASS.slnx` (repo root) in VS 2026, or build from the command line:
 msbuild MASS.slnx /p:Configuration=Release /p:Platform=x64 /m
 ```
 
-Standard VS layout — each project sits next to its sources:
-`libmassedit/massedit.vcxproj` (static lib), `libmassedit/server/mass-mcp.vcxproj`,
-`libmassedit/test/test_*.vcxproj`. Executables (`mass-mcp.exe`, `test_*.exe`) are emitted to
-`Dist/x64/<Config>/` alongside `tinyxml2.dll` (same location as `build-dist.ps1`); the static
-lib stays in its own `build/`.
+Standard VS layout — every project is hand-authored, PascalCase, and sits next to its sources.
+Solution folders:
+- **App/** — `core/Mss.vcxproj` (static lib), `Arena/Arena.vcxproj`, `render/Render.vcxproj`,
+  `python/Pymss.vcxproj`. These are the heavy DART/Bullet/GLFW/GLUT/Python targets; dependency
+  resolution is delegated to **vcpkg MSBuild auto-link** (`Legacy.props` imports vcpkg's
+  `vcpkg.props`/`vcpkg.targets`), so DART & friends link automatically. Outputs keep their
+  legacy names (`arena.exe`, `render.exe`, `mss.lib`, `pymss.cp310-win_amd64.pyd`).
+- **MCP/** — `libmassedit/MassEdit.vcxproj` (static lib), `libmassedit/server/MassMcp.vcxproj`.
+- **MCP/tests/** — `libmassedit/test/Test*.vcxproj` (nine).
 
-The heavy legacy targets (`mss`, `arena`, `render`, `pymss`) are DART/Bullet/GLFW/Python and
-stay **CMake-owned**. `MASS.slnx` references their CMake-generated `.vcxproj` under `build/` in a
-"legacy (CMake)" folder, so they show up in the same solution — **after** a one-time
-`scripts\build-dist.ps1` (or any CMake configure) has generated `build/`. Hand-authoring their
-dependency graph is intentionally avoided.
+Executables/modules land in `Dist/x64/<Config>/` (same as `build-dist.ps1`); static libs stay in
+their own `build/`. vcpkg's applocal step copies the required runtime DLLs next to the exes.
+Building the App projects needs the vcpkg tree at `Deps/vcpkg/installed/x64-windows` (already
+present after the normal setup).
 `libmassedit/common.props` (imported by every project) wires the toolchain
 (v145 / SDK 10.0.26100.0 / C++17) and the vcpkg `x64-windows` include+lib paths; exes link
 `massedit` via `ProjectReference` and copy `tinyxml2.dll` post-build.

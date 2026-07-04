@@ -2,26 +2,25 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
-  <Project Path="libmassedit/massedit.vcxproj" Id="a1000000-0000-0000-0000-000000000001" />
-  <Project Path="libmassedit/server/mass-mcp.vcxproj" Id="a1000000-0000-0000-0000-000000000002" />
-  <Folder Name="/tests/">
-    <Project Path="libmassedit/test/test_index.vcxproj" Id="a1000000-0000-0000-0000-000000000003" />
-    <Project Path="libmassedit/test/test_kinematics.vcxproj" Id="a1000000-0000-0000-0000-000000000004" />
-    <Project Path="libmassedit/test/test_batch.vcxproj" Id="a1000000-0000-0000-0000-000000000005" />
-    <Project Path="libmassedit/test/test_model.vcxproj" Id="a1000000-0000-0000-0000-000000000006" />
-    <Project Path="libmassedit/test/test_query.vcxproj" Id="a1000000-0000-0000-0000-000000000007" />
-    <Project Path="libmassedit/test/test_complete.vcxproj" Id="a1000000-0000-0000-0000-000000000008" />
-    <Project Path="libmassedit/test/test_atlas.vcxproj" Id="a1000000-0000-0000-0000-000000000009" />
-    <Project Path="libmassedit/test/test_groom.vcxproj" Id="a1000000-0000-0000-0000-00000000000a" />
-    <Project Path="libmassedit/test/test_mcp.vcxproj" Id="a1000000-0000-0000-0000-00000000000b" />
+  <Folder Name="/App/">
+    <Project Path="core/Mss.vcxproj" Id="b2000000-0000-0000-0000-000000000001" />
+    <Project Path="Arena/Arena.vcxproj" Id="b2000000-0000-0000-0000-000000000002" />
+    <Project Path="render/Render.vcxproj" Id="b2000000-0000-0000-0000-000000000003" />
+    <Project Path="python/Pymss.vcxproj" Id="b2000000-0000-0000-0000-000000000004" />
   </Folder>
-  <!-- Legacy heavy targets (DART/Bullet/GLFW/imgui/Python) are CMake-owned. These
-       reference the CMake-generated .vcxproj under build/, so they appear here after
-       a one-time `scripts\build-dist.ps1` (or a CMake configure) has generated them. -->
-  <Folder Name="/legacy (CMake)/">
-    <Project Path="build/core/mss.vcxproj" Id="f6ad25e3-bf44-3484-ac7d-38f3809a6d7e" />
-    <Project Path="build/Arena/arena.vcxproj" Id="006c033c-ddda-3163-9562-f45517b5162b" />
-    <Project Path="build/render/render.vcxproj" Id="67a59e13-d82e-3583-a6a3-ac6b27171c6b" />
-    <Project Path="build/python/pymss.vcxproj" Id="42b217d9-0e37-365f-9d62-b5ea4383e717" />
+  <Folder Name="/MCP/">
+    <Project Path="libmassedit/MassEdit.vcxproj" Id="a1000000-0000-0000-0000-000000000001" />
+    <Project Path="libmassedit/server/MassMcp.vcxproj" Id="a1000000-0000-0000-0000-000000000002" />
+  </Folder>
+  <Folder Name="/MCP/tests/">
+    <Project Path="libmassedit/test/TestIndex.vcxproj" Id="a1000000-0000-0000-0000-000000000003" />
+    <Project Path="libmassedit/test/TestKinematics.vcxproj" Id="a1000000-0000-0000-0000-000000000004" />
+    <Project Path="libmassedit/test/TestBatch.vcxproj" Id="a1000000-0000-0000-0000-000000000005" />
+    <Project Path="libmassedit/test/TestModel.vcxproj" Id="a1000000-0000-0000-0000-000000000006" />
+    <Project Path="libmassedit/test/TestQuery.vcxproj" Id="a1000000-0000-0000-0000-000000000007" />
+    <Project Path="libmassedit/test/TestComplete.vcxproj" Id="a1000000-0000-0000-0000-000000000008" />
+    <Project Path="libmassedit/test/TestAtlas.vcxproj" Id="a1000000-0000-0000-0000-000000000009" />
+    <Project Path="libmassedit/test/TestGroom.vcxproj" Id="a1000000-0000-0000-0000-00000000000a" />
+    <Project Path="libmassedit/test/TestMcp.vcxproj" Id="a1000000-0000-0000-0000-00000000000b" />
   </Folder>
 </Solution>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared settings for the hand-authored native VS projects of the heavy,
+     CMake-parity targets (Mss, Arena, Render, Pymss). Dependency resolution is
+     delegated to vcpkg's MSBuild auto-link (each project imports vcpkg.props /
+     vcpkg.targets), so DART/Bullet/GLFW/assimp/etc. are linked automatically. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Executables/modules go to Dist\x64\<Config> (as build-dist.ps1 packages);
+         static libs stay project-local. -->
+    <OutDir Condition="'$(ConfigurationType)'!='StaticLibrary'">$(MSBuildThisFileDirectory)Dist\x64\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(ConfigurationType)'=='StaticLibrary'">$(ProjectDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)build\int\$(ProjectName)\$(Configuration)\</IntDir>
+    <PythonRoot Condition="'$(PythonRoot)'==''">C:\Users\Hermes\AppData\Local\Programs\Python\Python310</PythonRoot>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)core;$(VcpkgRoot)\installed\x64-windows\include\eigen3;$(VcpkgRoot)\installed\x64-windows\include\bullet;$(PythonRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!-- Match the CMake recipe DART/fmt/tinyxml2 need to compile cleanly. -->
+      <PreprocessorDefinitions>MASS_ROOT_DIR=&quot;$(MSBuildThisFileDirectory.Replace('\','/'))&quot;;DART_HAVE_spdlog=0;DART_ACTIVE_LOG_LEVEL=2;FMT_HEADER_ONLY=1;TINYXML2_IMPORT;_FILE_OFFSET_BITS=64;_USE_MATH_DEFINES;NOMINMAX;_WIN32_WINNT=0x0601;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/bigobj /utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(PythonRoot)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

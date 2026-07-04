@@ -9,28 +9,33 @@ ISO (YYYY-MM-DD).
 
 ## [Unreleased]
 
-### Added — Visual Studio 2026 solution
-- Native VS 2026 solution `MASS.slnx` at the **repo root**, with hand-authored
-  `.vcxproj` next to each project's sources (standard VS C/C++ layout):
-  `libmassedit/massedit.vcxproj` (static lib), `libmassedit/server/mass-mcp.vcxproj`
-  (server exe), and `libmassedit/test/test_*.vcxproj` (the nine test exes:
-  `test_index`, `test_kinematics`, `test_batch`, `test_model`, `test_query`,
-  `test_complete`, `test_atlas`, `test_groom`, `test_mcp`).
-- `libmassedit/common.props`, imported by every project, centralizes the
-  toolchain: PlatformToolset `v145`, SDK `10.0.26100.0`, C++17, the vcpkg
-  `x64-windows` include/lib paths (Debug/Release aware), and a post-build copy of
-  `tinyxml2.dll`. Executables are emitted to `Dist/x64/<Config>/` (same as
-  `build-dist.ps1`); the static lib stays in its own `build/`. Exes link
-  `massedit` via `ProjectReference`.
-- Builds clean in VS 2026 / MSBuild (`massedit.lib`, `mass-mcp.exe`, 9 test exes);
-  all nine test binaries pass and the server answers over TCP from the VS output.
-
-> The legacy heavy targets (`core`/`mss`, `render`, `Arena`, `pymss`) continue to
-> build through CMake (`scripts/build-dist.ps1`); their DART/Bullet/OpenGL vcpkg
-> graphs are not hand-authored. `MASS.slnx` references the CMake-generated
-> `build/*/*.vcxproj` for `mss`/`arena`/`render`/`pymss` in a "legacy (CMake)"
-> folder, so they appear in the same solution once `build-dist.ps1` (or a CMake
-> configure) has generated `build/`.
+### Added — Visual Studio 2026 solution (fully native, PascalCase)
+- Native VS 2026 solution `MASS.slnx` at the **repo root**. Every project is
+  hand-authored, PascalCase, and committed next to its sources (no reliance on
+  CMake-generated files under the git-ignored `build/`). Solution folders:
+  - **App/** — `core/Mss.vcxproj` (static lib), `Arena/Arena.vcxproj`,
+    `render/Render.vcxproj`, `python/Pymss.vcxproj`. The heavy
+    DART/Bullet/GLFW/GLUT/assimp/Python targets: dependency resolution is
+    delegated to **vcpkg MSBuild auto-link** via `Legacy.props` (imports vcpkg's
+    `vcpkg.props`/`vcpkg.targets`), so DART & friends link automatically and the
+    runtime DLLs are copied by vcpkg's applocal step. `Legacy.props` also carries
+    the CMake-parity recipe (`MASS_ROOT_DIR`, `DART_HAVE_spdlog=0`,
+    `DART_ACTIVE_LOG_LEVEL=2`, `FMT_HEADER_ONLY=1`, `TINYXML2_IMPORT`,
+    `_USE_MATH_DEFINES`, `/bigobj /utf-8`, eigen3/bullet include dirs). Outputs
+    keep their legacy names (`arena.exe`, `render.exe`, `mss.lib`,
+    `pymss.cp310-win_amd64.pyd`).
+  - **MCP/** — `libmassedit/MassEdit.vcxproj` (static lib),
+    `libmassedit/server/MassMcp.vcxproj`.
+  - **MCP/tests/** — `libmassedit/test/Test*.vcxproj` (TestIndex, TestKinematics,
+    TestBatch, TestModel, TestQuery, TestComplete, TestAtlas, TestGroom, TestMcp).
+- `libmassedit/common.props` centralizes the light-target toolchain (v145 / SDK
+  10.0.26100.0 / C++17, vcpkg include/lib, `tinyxml2.dll` copy); exes link
+  `MassEdit` via `ProjectReference`.
+- Executables/modules go to `Dist/x64/<Config>/` (same as `build-dist.ps1`);
+  static libs stay in their own `build/`.
+- Verified: the whole solution builds via MSBuild in VS 2026 (all 15 projects:
+  `mss`/`arena`/`render`/`pymss` + `MassEdit`/`MassMcp` + 9 tests); the nine test
+  binaries pass and `MassMcp` answers over TCP from `Dist`.
 
 ### The `libmassedit` library (new)
 A shared C++17 library over the `mass::Model` struct, used by the MCP server and
