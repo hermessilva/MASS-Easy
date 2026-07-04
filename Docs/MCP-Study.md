@@ -4,7 +4,8 @@ Initial engineering study for an **MCP (Model Context Protocol) server embedded 
 that lets an AI agent and a human co-edit the same live musculoskeletal model, complete
 missing anatomy, animate parts to validate the rig, and validate against an anatomy atlas.
 
-> Status: **study / design**. No code yet. Recommendations marked **(default)**.
+> Status: **design + implementation in progress**. The `libmassedit` library and a runnable
+> standalone `mass-mcp` server are built and tested; see §13 for what is done and what remains.
 
 ---
 
@@ -324,6 +325,46 @@ authored controls → procedural expansion to real geometry → physical path tr
 5. Generate hand phalanges in phase 1: **yes (default)** — it is the "close right hand" test case.
 
 ---
+
+## 13. Implementation status
+
+Built and unit/integration-tested in `libmassedit/` (9 ctest suites green, MSVC 14.51; the
+real-data suites run over `data/human.mass`):
+
+| Area | Module | Status |
+|---|---|---|
+| Relational index (ids, reverse lookups, selector) | `Index` | done |
+| Stable uids + migration | `MassModel::assignUids` | done |
+| JSON query facade | `Query` | done |
+| FK (rotate joint, subtree, re-anchor) + DOF map | `Kinematics`, `DofMap` | done |
+| Batch scale_bone / translate / L-R mirror | `Batch` | done |
+| Completion (finger chains) + list_gaps | `Complete` | done |
+| Atlas (.osim) parse + validate + sync | `Atlas` | done |
+| Groom params + PBD guide solver | `Groom` | done |
+| MCP JSON-RPC dispatch + co-edit queue | `Mcp` (`McpServer`, `McpQueue`) | done |
+| **Standalone server** (TCP, newline JSON-RPC) | `libmassedit/server/mass-mcp` | **built + smoke-tested** |
+
+Run the standalone server (verified: `initialize`, `describe_model`→23/284,
+`muscles_of_body Pelvis`→112):
+```powershell
+cmake -S libmassedit/server -B libmassedit/server/build -G "Visual Studio 18 2026" -A x64
+cmake --build libmassedit/server/build --config Release
+libmassedit/server/build/Release/mass-mcp.exe data/human.mass 8766
+```
+
+### Remaining: in-process hosting inside `arena.exe`
+The co-edit *mechanism* (`McpQueue`, single-writer drain) and *transport* (mass-mcp) exist and
+are tested. Hosting it inside the running editor still requires, in order:
+1. **Extract `MassModel` into `libmassedit`** and make Arena consume it (Arena currently has its
+   own copy → two `mass::Model` definitions would be an ODR violation if linked together). This
+   is a refactor of `Arena/src` and needs a full Arena rebuild (DART/vcpkg).
+2. Add `McpBridge` mirroring `TrainBridge` (Asio TCP thread) that calls `McpQueue::submit` and
+   writes back the resolved future.
+3. In `App::frame()`, before drawing, call `queue.drain(server, mModel, mIndex)` and
+   `snapshot()` per applied mutation so human + AI edits share one undo stack.
+
+Deferred by design: `pose(named)` presets, `validate_motion`, DART dynamic-check target,
+SQLite report mirror, groom render-expansion export.
 
 ## References
 - Original MASS (SIGGRAPH 2019): https://github.com/lsw9021/MASS
