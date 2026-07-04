@@ -15,4 +15,13 @@
     <Project Path="libmassedit/test/test_groom.vcxproj" Id="a1000000-0000-0000-0000-00000000000a" />
     <Project Path="libmassedit/test/test_mcp.vcxproj" Id="a1000000-0000-0000-0000-00000000000b" />
   </Folder>
+  <!-- Legacy heavy targets (DART/Bullet/GLFW/imgui/Python) are CMake-owned. These
+       reference the CMake-generated .vcxproj under build/, so they appear here after
+       a one-time `scripts\build-dist.ps1` (or a CMake configure) has generated them. -->
+  <Folder Name="/legacy (CMake)/">
+    <Project Path="build/core/mss.vcxproj" />
+    <Project Path="build/Arena/arena.vcxproj" />
+    <Project Path="build/render/render.vcxproj" />
+    <Project Path="build/python/pymss.vcxproj" />
+  </Folder>
 </Solution>

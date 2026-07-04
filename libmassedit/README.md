@@ -43,6 +43,12 @@ Standard VS layout — each project sits next to its sources:
 `libmassedit/test/test_*.vcxproj`. Executables (`mass-mcp.exe`, `test_*.exe`) are emitted to
 `Dist/x64/<Config>/` alongside `tinyxml2.dll` (same location as `build-dist.ps1`); the static
 lib stays in its own `build/`.
+
+The heavy legacy targets (`mss`, `arena`, `render`, `pymss`) are DART/Bullet/GLFW/Python and
+stay **CMake-owned**. `MASS.slnx` references their CMake-generated `.vcxproj` under `build/` in a
+"legacy (CMake)" folder, so they show up in the same solution — **after** a one-time
+`scripts\build-dist.ps1` (or any CMake configure) has generated `build/`. Hand-authoring their
+dependency graph is intentionally avoided.
 `libmassedit/common.props` (imported by every project) wires the toolchain
 (v145 / SDK 10.0.26100.0 / C++17) and the vcpkg `x64-windows` include+lib paths; exes link
 `massedit` via `ProjectReference` and copy `tinyxml2.dll` post-build.

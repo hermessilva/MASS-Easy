@@ -27,7 +27,10 @@ ISO (YYYY-MM-DD).
 
 > The legacy heavy targets (`core`/`mss`, `render`, `Arena`, `pymss`) continue to
 > build through CMake (`scripts/build-dist.ps1`); their DART/Bullet/OpenGL vcpkg
-> graphs are not hand-authored.
+> graphs are not hand-authored. `MASS.slnx` references the CMake-generated
+> `build/*/*.vcxproj` for `mss`/`arena`/`render`/`pymss` in a "legacy (CMake)"
+> folder, so they appear in the same solution once `build-dist.ps1` (or a CMake
+> configure) has generated `build/`.
 
 ### The `libmassedit` library (new)
 A shared C++17 library over the `mass::Model` struct, used by the MCP server and
