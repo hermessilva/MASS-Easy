@@ -19,9 +19,9 @@
        reference the CMake-generated .vcxproj under build/, so they appear here after
        a one-time `scripts\build-dist.ps1` (or a CMake configure) has generated them. -->
   <Folder Name="/legacy (CMake)/">
-    <Project Path="build/core/mss.vcxproj" />
-    <Project Path="build/Arena/arena.vcxproj" />
-    <Project Path="build/render/render.vcxproj" />
-    <Project Path="build/python/pymss.vcxproj" />
+    <Project Path="build/core/mss.vcxproj" Id="f6ad25e3-bf44-3484-ac7d-38f3809a6d7e" />
+    <Project Path="build/Arena/arena.vcxproj" Id="006c033c-ddda-3163-9562-f45517b5162b" />
+    <Project Path="build/render/render.vcxproj" Id="67a59e13-d82e-3583-a6a3-ac6b27171c6b" />
+    <Project Path="build/python/pymss.vcxproj" Id="42b217d9-0e37-365f-9d62-b5ea4383e717" />
   </Folder>
 </Solution>
