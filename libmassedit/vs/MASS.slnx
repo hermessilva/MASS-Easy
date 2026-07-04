@@ -1,0 +1,18 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="massedit.vcxproj" />
+  <Project Path="mass-mcp.vcxproj" />
+  <Folder Name="/tests/">
+    <Project Path="test_index.vcxproj" />
+    <Project Path="test_kinematics.vcxproj" />
+    <Project Path="test_batch.vcxproj" />
+    <Project Path="test_model.vcxproj" />
+    <Project Path="test_query.vcxproj" />
+    <Project Path="test_complete.vcxproj" />
+    <Project Path="test_atlas.vcxproj" />
+    <Project Path="test_groom.vcxproj" />
+    <Project Path="test_mcp.vcxproj" />
+  </Folder>
+</Solution>

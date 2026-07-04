@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared settings for all libmassedit VS projects: vcpkg include/lib, C++17,
+     shared output dir, and the tinyxml2 runtime copy. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VcpkgRoot>$(MSBuildThisFileDirectory)..\..\Deps\vcpkg\installed\x64-windows</VcpkgRoot>
+    <LibRoot>$(MSBuildThisFileDirectory)..</LibRoot>
+    <OutDir>$(MSBuildThisFileDirectory)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(MSBuildThisFileDirectory)build\int\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <_VcpkgLib>$(VcpkgRoot)\debug\lib</_VcpkgLib>
+    <_VcpkgBin>$(VcpkgRoot)\debug\bin</_VcpkgBin>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <_VcpkgLib>$(VcpkgRoot)\lib</_VcpkgLib>
+    <_VcpkgBin>$(VcpkgRoot)\bin</_VcpkgBin>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(LibRoot);$(VcpkgRoot)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0601;BOOST_ASIO_NO_DEPRECATED;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(_VcpkgLib);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>tinyxml2.lib;ws2_32.lib;mswsock.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(_VcpkgBin)\tinyxml2.dll" copy /Y "$(_VcpkgBin)\tinyxml2.dll" "$(OutDir)" &gt;nul</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+</Project>

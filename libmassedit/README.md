@@ -31,13 +31,33 @@ Replaces name-string scans with:
 
 ## Build & test
 
-Tests are standalone (no vcpkg needed for the unit test; the integration test uses the repo's
-vcpkg `nlohmann/json` include if present):
+### Visual Studio 2026 solution (native)
+Open `libmassedit/vs/MASS.slnx` in VS 2026, or build from the command line:
+
+```powershell
+msbuild libmassedit/vs/MASS.slnx /p:Configuration=Release /p:Platform=x64 /m
+# outputs -> libmassedit/vs/build/x64/Release/  (massedit.lib, mass-mcp.exe, test_*.exe)
+```
+
+`common.props` wires the toolchain (v145 / SDK 10.0.26100.0 / C++17) and the vcpkg
+`x64-windows` include+lib paths; test/server projects link `massedit` via `ProjectReference`
+and copy `tinyxml2.dll` post-build.
+
+### CMake (used by CI/scripts)
+The test suite also builds standalone via CMake (no vcpkg needed for the pure unit tests; the
+integration tests use the repo's vcpkg `nlohmann/json` + `tinyxml2` if present):
 
 ```powershell
 cmake -S libmassedit/test -B libmassedit/test/build -G "Visual Studio 18 2026" -A x64
 cmake --build libmassedit/test/build --config Release
 ctest --test-dir libmassedit/test/build -C Release --output-on-failure
+```
+
+Run the standalone MCP server:
+```powershell
+cmake -S libmassedit/server -B libmassedit/server/build -G "Visual Studio 18 2026" -A x64
+cmake --build libmassedit/server/build --config Release
+libmassedit/server/build/Release/mass-mcp.exe data/human.mass 8766
 ```
 
 `test_index` uses a hand-built model; `test_model` builds the Index over `data/human.mass`
