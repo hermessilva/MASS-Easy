@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Shared settings for all libmassedit VS projects: vcpkg include/lib, C++17,
-     shared output dir, and the tinyxml2 runtime copy. -->
+<!-- Shared settings for the libmassedit VS projects (massedit lib, mass-mcp
+     server, tests). Explicitly imported by each .vcxproj (not a
+     Directory.Build.props, to avoid leaking into the CMake/Arena builds).
+     Paths that must resolve to this file's folder use MSBuildThisFileDirectory;
+     per-project output uses ProjectDir so each project writes its own build/. -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <VcpkgRoot>$(MSBuildThisFileDirectory)..\..\Deps\vcpkg\installed\x64-windows</VcpkgRoot>
-    <LibRoot>$(MSBuildThisFileDirectory)..</LibRoot>
-    <OutDir>$(MSBuildThisFileDirectory)build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(MSBuildThisFileDirectory)build\int\$(ProjectName)\$(Configuration)\</IntDir>
+    <VcpkgRoot>$(MSBuildThisFileDirectory)..\Deps\vcpkg\installed\x64-windows</VcpkgRoot>
+    <LibRoot>$(MSBuildThisFileDirectory.TrimEnd('\'))</LibRoot>
+    <OutDir>$(ProjectDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)build\int\$(ProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <_VcpkgLib>$(VcpkgRoot)\debug\lib</_VcpkgLib>

@@ -10,17 +10,19 @@ ISO (YYYY-MM-DD).
 ## [Unreleased]
 
 ### Added — Visual Studio 2026 solution
-- Native VS 2026 solution `libmassedit/vs/MASS.slnx` with hand-authored
-  `.vcxproj` for every compilable C/C++ target in the `libmassedit` family:
-  `massedit` (static lib), `mass-mcp` (server exe), and the nine test exes
-  (`test_index`, `test_kinematics`, `test_batch`, `test_model`, `test_query`,
+- Native VS 2026 solution `MASS.slnx` at the **repo root**, with hand-authored
+  `.vcxproj` next to each project's sources (standard VS C/C++ layout):
+  `libmassedit/massedit.vcxproj` (static lib), `libmassedit/server/mass-mcp.vcxproj`
+  (server exe), and `libmassedit/test/test_*.vcxproj` (the nine test exes:
+  `test_index`, `test_kinematics`, `test_batch`, `test_model`, `test_query`,
   `test_complete`, `test_atlas`, `test_groom`, `test_mcp`).
-- `libmassedit/vs/common.props` centralizes the toolchain: PlatformToolset
-  `v145`, SDK `10.0.26100.0`, C++17, the vcpkg `x64-windows` include/lib paths
-  (Debug/Release aware), and a post-build copy of `tinyxml2.dll`. Tests/server
-  link `massedit` via `ProjectReference`.
+- `libmassedit/common.props`, imported by every project, centralizes the
+  toolchain: PlatformToolset `v145`, SDK `10.0.26100.0`, C++17, the vcpkg
+  `x64-windows` include/lib paths (Debug/Release aware), per-project `build/`
+  output, and a post-build copy of `tinyxml2.dll`. Exes link `massedit` via
+  `ProjectReference`.
 - Builds clean in VS 2026 / MSBuild (`massedit.lib`, `mass-mcp.exe`, 9 test exes);
-  all nine test binaries pass when run from the VS output.
+  all nine test binaries pass and the server answers over TCP from the VS output.
 
 > The legacy heavy targets (`core`/`mss`, `render`, `Arena`, `pymss`) continue to
 > build through CMake (`scripts/build-dist.ps1`); their DART/Bullet/OpenGL vcpkg

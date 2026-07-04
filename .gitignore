@@ -11,9 +11,13 @@ nn/
 __pycache__/
 imgui.ini
 /New folder/
+*.fill
+fills/
 python/Release/
 python/Debug/
 core/Release/
 core/Debug/
 Arena/Release/
 Arena/Debug/
+.vs/
+*.vcxproj.user

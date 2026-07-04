@@ -32,16 +32,18 @@ Replaces name-string scans with:
 ## Build & test
 
 ### Visual Studio 2026 solution (native)
-Open `libmassedit/vs/MASS.slnx` in VS 2026, or build from the command line:
+Open `MASS.slnx` (repo root) in VS 2026, or build from the command line:
 
 ```powershell
-msbuild libmassedit/vs/MASS.slnx /p:Configuration=Release /p:Platform=x64 /m
-# outputs -> libmassedit/vs/build/x64/Release/  (massedit.lib, mass-mcp.exe, test_*.exe)
+msbuild MASS.slnx /p:Configuration=Release /p:Platform=x64 /m
 ```
 
-`common.props` wires the toolchain (v145 / SDK 10.0.26100.0 / C++17) and the vcpkg
-`x64-windows` include+lib paths; test/server projects link `massedit` via `ProjectReference`
-and copy `tinyxml2.dll` post-build.
+Standard VS layout — each project sits next to its sources:
+`libmassedit/massedit.vcxproj` (static lib), `libmassedit/server/mass-mcp.vcxproj`,
+`libmassedit/test/test_*.vcxproj`. Outputs land in each project's `build/x64/<Config>/`.
+`libmassedit/common.props` (imported by every project) wires the toolchain
+(v145 / SDK 10.0.26100.0 / C++17) and the vcpkg `x64-windows` include+lib paths; exes link
+`massedit` via `ProjectReference` and copy `tinyxml2.dll` post-build.
 
 ### CMake (used by CI/scripts)
 The test suite also builds standalone via CMake (no vcpkg needed for the pure unit tests; the

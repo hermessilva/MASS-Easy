@@ -6,8 +6,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
-    <ProjectGuid>{A1000000-0000-0000-0000-000000000009}</ProjectGuid>
-    <RootNamespace>test_atlas</RootNamespace>
+    <ProjectGuid>{A1000000-0000-0000-0000-000000000003}</ProjectGuid>
+    <RootNamespace>test_index</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -19,7 +19,7 @@
   <PropertyGroup Condition="'$(Configuration)'=='Debug'"><UseDebugLibraries>true</UseDebugLibraries></PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'"><UseDebugLibraries>false</UseDebugLibraries></PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <Import Project="common.props" />
+  <Import Project="..\common.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile><Optimization>Disabled</Optimization><RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary></ClCompile>
     <Link><SubSystem>Console</SubSystem></Link>
@@ -29,10 +29,10 @@
     <Link><SubSystem>Console</SubSystem></Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\test\test_atlas.cpp" />
+    <ClCompile Include="test_index.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="massedit.vcxproj"><Project>{A1000000-0000-0000-0000-000000000001}</Project></ProjectReference>
+    <ProjectReference Include="..\massedit.vcxproj"><Project>{A1000000-0000-0000-0000-000000000001}</Project></ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
