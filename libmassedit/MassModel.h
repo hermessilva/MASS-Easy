@@ -124,6 +124,20 @@ struct Fill {
     bool includeMuscles = true;
 };
 
+// Authored hair/fur groom (persisted controls; never per-strand geometry). A
+// handful of these parameterize the procedural expansion + guide simulation.
+struct GroomParams {
+    std::string name = "groom";
+    std::string region;          // surface region / bone binding tag
+    double length    = 0.3;      // strand length (m)
+    double stiffness = 0.5;      // 0..1 bend stiffness
+    double damping   = 0.1;      // 0..1 velocity damping (dynamic tier)
+    double density   = 1.0;      // relative follicle density
+    int    guides    = 128;      // simulated guide count
+    int    segments  = 24;       // particles per guide - 1
+    bool   dynamic   = true;     // simulated vs static
+};
+
 struct Model {
     int version = 1;
     Meta meta;
@@ -134,6 +148,7 @@ struct Model {
     std::vector<Light> lights;       // scene lighting (editor)
     double ambient = 0.25;           // global ambient term
     std::vector<Fill> fills;         // generated skin/tissue fills
+    std::vector<GroomParams> grooms; // hair/fur grooms (authored controls)
 
     // lookups
     Node* findNode(const std::string& id);

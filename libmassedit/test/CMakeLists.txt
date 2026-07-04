@@ -43,6 +43,15 @@ if(EXISTS "${_vcpkg_inc}/nlohmann/json.hpp")
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         "${_vcpkg_inc}")
 
+    add_executable(test_groom
+        test_groom.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Groom.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Kinematics.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Index.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../MassModel.cpp)
+    target_include_directories(test_groom PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/.. "${_vcpkg_inc}")
+
     # Atlas needs tinyxml2 (linked). Only build if the vcpkg lib is present.
     set(_vcpkg_root "${CMAKE_CURRENT_SOURCE_DIR}/../../Deps/vcpkg/installed/x64-windows")
     if(EXISTS "${_vcpkg_root}/lib/tinyxml2.lib")
@@ -84,6 +93,7 @@ if(TARGET test_model)
     add_test(NAME query COMMAND test_query
              "${CMAKE_CURRENT_SOURCE_DIR}/../../data/human.mass")
     add_test(NAME complete COMMAND test_complete)
+    add_test(NAME groom COMMAND test_groom)
     if(TARGET test_atlas)
         add_test(NAME atlas COMMAND test_atlas)
     endif()

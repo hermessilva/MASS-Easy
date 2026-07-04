@@ -123,6 +123,13 @@ static json toJson(const Model& m) {
                        {"thickness", f.thickness}, {"smooth", f.smooth}, {"bodyScale", f.bodyScale},
                        {"cell", f.cell}, {"muscleScale", f.muscleScale}, {"includeMuscles", f.includeMuscles} });
     root["fills"] = fl;
+
+    json gr = json::array();
+    for (const auto& g : m.grooms)
+        gr.push_back({ {"name", g.name}, {"region", g.region}, {"length", g.length},
+                       {"stiffness", g.stiffness}, {"damping", g.damping}, {"density", g.density},
+                       {"guides", g.guides}, {"segments", g.segments}, {"dynamic", g.dynamic} });
+    root["grooms"] = gr;
     return root;
 }
 
@@ -221,6 +228,19 @@ static Model fromJson(const json& root) {
         fi.muscleScale = f.value("muscleScale", 1.0);
         fi.includeMuscles = f.value("includeMuscles", true);
         m.fills.push_back(fi);
+    }
+    for (const auto& g : root.value("grooms", json::array())) {
+        GroomParams gp;
+        gp.name = g.value("name", "groom");
+        gp.region = g.value("region", "");
+        gp.length = g.value("length", 0.3);
+        gp.stiffness = g.value("stiffness", 0.5);
+        gp.damping = g.value("damping", 0.1);
+        gp.density = g.value("density", 1.0);
+        gp.guides = g.value("guides", 128);
+        gp.segments = g.value("segments", 24);
+        gp.dynamic = g.value("dynamic", true);
+        m.grooms.push_back(gp);
     }
     return m;
 }

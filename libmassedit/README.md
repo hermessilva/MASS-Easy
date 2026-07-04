@@ -16,6 +16,7 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 | `Batch.*` | scale_bone (along-axis, subtree slide, waypoint re-anchor), translate_subtree, L/R symmetric | **done, tested** |
 | `Complete.*` | finger/phalanx generation (Revolute flex chains), `list_gaps`, L/R symmetric | **done, tested** |
 | `Atlas.*` | OpenSim `.osim` parse (tinyxml2), normalized join, `validate`, `sync` | **done, tested** |
+| `Groom.*` | GroomParams (persisted) + `HairSim` PBD guide solver (dynamic tier) | **done, tested** |
 
 ## Index (phase 1)
 
@@ -47,7 +48,8 @@ follow; L/R symmetric scales both legs); `test_query` migrates uids + exercises 
 over real data; `test_complete` generates finger chains on a bare hand, flexes a finger (tip
 moves — animatable), and checks `list_gaps` before/after + symmetric fill; `test_atlas` parses a
 minimal `.osim`, joins by normalized name, and validates/syncs a model (origin/insertion,
-f0 deviation, side inference).
+f0 deviation, side inference); `test_groom` runs the PBD guide solver (root pinned, inextensible
+segments settle to a vertical hang, wind deflects the tip) and checks GroomParams persistence.
 
 > Note: MSVC `<cmath>` resolves `<math.h>` case-insensitively — do **not** put `Arena/src`
 > (which contains `Math.h`) on the include path, or the UCRT `math.h` gets shadowed. This is
