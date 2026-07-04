@@ -53,6 +53,12 @@ public:
     EntityId boneByName(const std::string& name) const;
     EntityId muscleByName(const std::string& name) const;
 
+    // ---- stable-uid lookups ----
+    EntityId boneByUid(const std::string& uid) const;
+    EntityId muscleByUid(const std::string& uid) const;
+    // Resolve a free-form key: tries bone/muscle uid, then bone/muscle name.
+    EntityId resolve(const std::string& key) const;
+
     // ---- reverse indices ----
     // All distinct muscles anchoring any waypoint to a bone (e.g. Pelvis -> 112).
     const std::vector<int>& musclesOfBone(const std::string& bone) const;
@@ -84,6 +90,7 @@ private:
     std::vector<std::string> mBoneName, mMuscleName;        // previous names (staleness)
 
     std::unordered_map<std::string, int> mBoneSlot, mMuscleSlot;
+    std::unordered_map<std::string, int> mBoneUid, mMuscleUid;
     std::unordered_map<std::string, std::vector<int>>   mBoneMuscles;   // bone -> muscle slots
     std::unordered_map<std::string, std::vector<WpRef>> mBoneWaypoints; // bone -> waypoints
     std::vector<int> mParent;                               // bone slot -> parent slot

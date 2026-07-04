@@ -49,11 +49,17 @@ void Index::build(const Model& m) {
     ensure(mMuscleGen, mMuscleName, nm, [&](int i){ return m.muscles[i].name; });
 
     mBoneSlot.clear(); mMuscleSlot.clear();
+    mBoneUid.clear(); mMuscleUid.clear();
     mBoneMuscles.clear(); mBoneWaypoints.clear();
     mParent.assign(nb, -1);
     mMuscleBones.assign(nm, {});
 
-    for (int i = 0; i < nb; i++) mBoneSlot[m.skeleton[i].id] = i;
+    for (int i = 0; i < nb; i++) {
+        mBoneSlot[m.skeleton[i].id] = i;
+        if (!m.skeleton[i].uid.empty()) mBoneUid[m.skeleton[i].uid] = i;
+    }
+    for (int i = 0; i < nm; i++)
+        if (!m.muscles[i].uid.empty()) mMuscleUid[m.muscles[i].uid] = i;
     for (int i = 0; i < nb; i++) {
         const std::string& par = m.skeleton[i].parent;
         auto it = mBoneSlot.find(par);
@@ -105,6 +111,19 @@ int Index::muscleSlot(const std::string& n) const {
 }
 EntityId Index::boneByName(const std::string& n) const { return boneId(boneSlot(n)); }
 EntityId Index::muscleByName(const std::string& n) const { return muscleId(muscleSlot(n)); }
+
+EntityId Index::boneByUid(const std::string& uid) const {
+    auto it = mBoneUid.find(uid); return it != mBoneUid.end() ? boneId(it->second) : EntityId{};
+}
+EntityId Index::muscleByUid(const std::string& uid) const {
+    auto it = mMuscleUid.find(uid); return it != mMuscleUid.end() ? muscleId(it->second) : EntityId{};
+}
+EntityId Index::resolve(const std::string& key) const {
+    EntityId e = boneByUid(key);   if (e.valid()) return e;
+    e = muscleByUid(key);          if (e.valid()) return e;
+    e = boneByName(key);           if (e.valid()) return e;
+    return muscleByName(key);
+}
 
 // ---- reverse indices ----
 const std::vector<int>& Index::musclesOfBone(const std::string& bone) const {

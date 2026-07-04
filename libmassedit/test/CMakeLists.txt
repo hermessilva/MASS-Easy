@@ -23,6 +23,15 @@ if(EXISTS "${_vcpkg_inc}/nlohmann/json.hpp")
     target_include_directories(test_model PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         "${_vcpkg_inc}")
+
+    add_executable(test_query
+        test_query.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Index.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Query.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../MassModel.cpp)
+    target_include_directories(test_query PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        "${_vcpkg_inc}")
 endif()
 
 add_executable(test_kinematics
@@ -45,5 +54,7 @@ add_test(NAME kinematics COMMAND test_kinematics)
 add_test(NAME batch COMMAND test_batch)
 if(TARGET test_model)
     add_test(NAME model COMMAND test_model
+             "${CMAKE_CURRENT_SOURCE_DIR}/../../data/human.mass")
+    add_test(NAME query COMMAND test_query
              "${CMAKE_CURRENT_SOURCE_DIR}/../../data/human.mass")
 endif()

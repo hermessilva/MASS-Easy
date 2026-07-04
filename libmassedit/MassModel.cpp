@@ -2,6 +2,8 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <sstream>
+#include <unordered_set>
+#include <cstdio>
 
 using json = nlohmann::json;
 
@@ -19,6 +21,23 @@ const Node* Model::findNode(const std::string& id) const {
 Muscle* Model::findMuscle(const std::string& name) {
     for (auto& m : muscles) if (m.name == name) return &m;
     return nullptr;
+}
+
+int Model::assignUids() {
+    std::unordered_set<std::string> used;
+    for (const auto& n : skeleton) if (!n.uid.empty()) used.insert(n.uid);
+    for (const auto& m : muscles)  if (!m.uid.empty()) used.insert(m.uid);
+    int assigned = 0;
+    int nc = 0, mc = 0;
+    char buf[16];
+    auto gen = [&](const char* pfx, int& ctr) {
+        std::string u;
+        do { std::snprintf(buf, sizeof(buf), "%s%04d", pfx, ++ctr); u = buf; } while (used.count(u));
+        used.insert(u); return u;
+    };
+    for (auto& n : skeleton) if (n.uid.empty()) { n.uid = gen("N", nc); ++assigned; }
+    for (auto& m : muscles)  if (m.uid.empty()) { m.uid = gen("M", mc); ++assigned; }
+    return assigned;
 }
 
 // ---- json helpers ----
@@ -59,6 +78,7 @@ static json toJson(const Model& m) {
             joint["lower"] = n.joint.lower[0]; joint["upper"] = n.joint.upper[0];
         }
         json jn = { {"id", n.id}, {"parent", n.parent}, {"body", body}, {"joint", joint} };
+        if (!n.uid.empty()) jn["uid"] = n.uid;
         if (n.endeffector) jn["endeffector"] = true;
         sk.push_back(jn);
     }
@@ -68,14 +88,16 @@ static json toJson(const Model& m) {
     for (const auto& mu : m.muscles) {
         json wps = json::array();
         for (const auto& w : mu.waypoints) wps.push_back({ {"body", w.body}, {"p", j(w.p)} });
-        ms.push_back({
+        json muj = {
             {"name", mu.name},
             {"hill", { {"f0", mu.f0}, {"lm", mu.lm}, {"lt", mu.lt},
                        {"pen_angle", mu.pen_angle}, {"lmax", mu.lmax} }},
             {"waypoints", wps},
             {"anatomy", { {"latin", mu.latin}, {"pt", mu.pt}, {"group", mu.group},
                           {"side", mu.side}, {"antagonist", mu.antagonist}, {"pcsa_cm2", mu.pcsa_cm2} }}
-        });
+        };
+        if (!mu.uid.empty()) muj["uid"] = mu.uid;
+        ms.push_back(muj);
     }
     root["muscles"] = ms;
 
@@ -116,6 +138,7 @@ static Model fromJson(const json& root) {
     for (const auto& n : root.value("skeleton", json::array())) {
         Node nd;
         nd.id = n.value("id", "");
+        nd.uid = n.value("uid", "");
         nd.parent = n.value("parent", "");
         nd.endeffector = n.value("endeffector", false);
         const auto& b = n["body"];
@@ -145,6 +168,7 @@ static Model fromJson(const json& root) {
     for (const auto& mu : root.value("muscles", json::array())) {
         Muscle x;
         x.name = mu.value("name", "");
+        x.uid = mu.value("uid", "");
         if (mu.contains("hill")) {
             const auto& h = mu["hill"];
             x.f0 = h.value("f0", 1000.0); x.lm = h.value("lm", 1.0);

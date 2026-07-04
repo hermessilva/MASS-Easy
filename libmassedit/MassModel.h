@@ -42,6 +42,7 @@ struct Joint {
 
 struct Node {
     std::string id;              // unique name
+    std::string uid;             // stable unique id (persisted; independent of name)
     std::string parent;          // parent id, "" = root (None)
     bool endeffector = false;    // reward end-effector flag (human.xml endeffector="True")
     Body body;
@@ -56,6 +57,7 @@ struct Waypoint {
 
 struct Muscle {
     std::string name;
+    std::string uid;             // stable unique id (persisted; independent of name)
     // runtime Hill parameters (exported to muscle284.xml)
     double f0 = 1000.0;          // max isometric force (N)
     double lm = 1.0;             // optimal fiber length (normalized in MASS)
@@ -137,6 +139,10 @@ struct Model {
     Node* findNode(const std::string& id);
     const Node* findNode(const std::string& id) const;
     Muscle* findMuscle(const std::string& name);
+
+    // Fill any empty uid with a fresh unique token ("N####"/"M####"). Returns the
+    // number assigned. Call after loading a legacy .mass to migrate it.
+    int assignUids();
 
     // JSON project (.mass)
     static std::optional<Model> LoadMass(const std::string& path, std::string* err = nullptr);

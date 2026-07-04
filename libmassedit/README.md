@@ -8,8 +8,9 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 
 | File | Role | Status |
 |---|---|---|
-| `MassModel.{h,cpp}` | `Model` struct + `.mass` JSON IO (canonical home; Arena will consume this) | present |
-| `Index.{h,cpp}` | generational-handle ids, reverse indices, group selector | **done, tested** |
+| `MassModel.{h,cpp}` | `Model` struct + `.mass` JSON IO + stable `uid` migration (`assignUids`) | **done, tested** |
+| `Index.{h,cpp}` | generational-handle ids, reverse indices, uid lookups, group selector | **done, tested** |
+| `Query.{h,cpp}` | JSON facade for MCP tools (describe/getNode/getMuscle/select) | **done, tested** |
 | `Kinematics.*` | FK: rotate joint, propagate subtree, re-anchor waypoints | **done, tested** |
 | `DofMap.*` | anatomical DOF layer (name → joint/axis/sign/range) | **done, tested** |
 | `Batch.*` | scale_bone (along-axis, subtree slide, waypoint re-anchor), translate_subtree, L/R symmetric | **done, tested** |
