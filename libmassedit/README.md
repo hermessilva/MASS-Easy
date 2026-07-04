@@ -15,8 +15,7 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 | `DofMap.*` | anatomical DOF layer (name → joint/axis/sign/range) | **done, tested** |
 | `Batch.*` | scale_bone (along-axis, subtree slide, waypoint re-anchor), translate_subtree, L/R symmetric | **done, tested** |
 | `Complete.*` | finger/phalanx generation (Revolute flex chains), `list_gaps`, L/R symmetric | **done, tested** |
-| `Atlas.*` | OpenSim `.osim` parse + join | planned |
-| `Validate.*` | internal + atlas checks | planned |
+| `Atlas.*` | OpenSim `.osim` parse (tinyxml2), normalized join, `validate`, `sync` | **done, tested** |
 
 ## Index (phase 1)
 
@@ -46,7 +45,9 @@ fixed, round-trip, proximal→distal chain order, DofMap value mapping); `test_b
 synthetic femur (bone scales along its axis; child subtree keeps length and slides; waypoints
 follow; L/R symmetric scales both legs); `test_query` migrates uids + exercises the JSON facade
 over real data; `test_complete` generates finger chains on a bare hand, flexes a finger (tip
-moves — animatable), and checks `list_gaps` before/after + symmetric fill.
+moves — animatable), and checks `list_gaps` before/after + symmetric fill; `test_atlas` parses a
+minimal `.osim`, joins by normalized name, and validates/syncs a model (origin/insertion,
+f0 deviation, side inference).
 
 > Note: MSVC `<cmath>` resolves `<math.h>` case-insensitively — do **not** put `Arena/src`
 > (which contains `Math.h`) on the include path, or the UCRT `math.h` gets shadowed. This is

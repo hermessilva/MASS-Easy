@@ -10,7 +10,8 @@ add_library(massedit STATIC
     DofMap.cpp
     Batch.cpp
     Complete.cpp
-    Query.cpp)
+    Query.cpp
+    Atlas.cpp)
 
 target_include_directories(massedit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -18,6 +19,12 @@ target_include_directories(massedit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 find_package(nlohmann_json CONFIG QUIET)
 if(nlohmann_json_FOUND)
     target_link_libraries(massedit PUBLIC nlohmann_json::nlohmann_json)
+endif()
+
+# tinyxml2 for the OpenSim .osim atlas parser.
+find_package(tinyxml2 CONFIG QUIET)
+if(tinyxml2_FOUND)
+    target_link_libraries(massedit PUBLIC tinyxml2::tinyxml2)
 endif()
 
 set_target_properties(massedit PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)

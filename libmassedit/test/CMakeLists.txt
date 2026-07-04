@@ -42,6 +42,22 @@ if(EXISTS "${_vcpkg_inc}/nlohmann/json.hpp")
     target_include_directories(test_complete PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         "${_vcpkg_inc}")
+
+    # Atlas needs tinyxml2 (linked). Only build if the vcpkg lib is present.
+    set(_vcpkg_root "${CMAKE_CURRENT_SOURCE_DIR}/../../Deps/vcpkg/installed/x64-windows")
+    if(EXISTS "${_vcpkg_root}/lib/tinyxml2.lib")
+        add_executable(test_atlas
+            test_atlas.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Index.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Atlas.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../MassModel.cpp)
+        target_include_directories(test_atlas PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/.. "${_vcpkg_inc}")
+        target_link_libraries(test_atlas PRIVATE "${_vcpkg_root}/lib/tinyxml2.lib")
+        add_custom_command(TARGET test_atlas POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_vcpkg_root}/bin/tinyxml2.dll" "$<TARGET_FILE_DIR:test_atlas>")
+    endif()
 endif()
 
 add_executable(test_kinematics
@@ -68,4 +84,7 @@ if(TARGET test_model)
     add_test(NAME query COMMAND test_query
              "${CMAKE_CURRENT_SOURCE_DIR}/../../data/human.mass")
     add_test(NAME complete COMMAND test_complete)
+    if(TARGET test_atlas)
+        add_test(NAME atlas COMMAND test_atlas)
+    endif()
 endif()
