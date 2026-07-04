@@ -12,7 +12,8 @@ add_library(massedit STATIC
     Complete.cpp
     Query.cpp
     Atlas.cpp
-    Groom.cpp)
+    Groom.cpp
+    Mcp.cpp)
 
 target_include_directories(massedit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

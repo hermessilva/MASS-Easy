@@ -17,6 +17,7 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 | `Complete.*` | finger/phalanx generation (Revolute flex chains), `list_gaps`, L/R symmetric | **done, tested** |
 | `Atlas.*` | OpenSim `.osim` parse (tinyxml2), normalized join, `validate`, `sync` | **done, tested** |
 | `Groom.*` | GroomParams (persisted) + `HairSim` PBD guide solver (dynamic tier) | **done, tested** |
+| `Mcp.*` | MCP JSON-RPC dispatch (`McpServer`) + single-writer co-edit queue (`McpQueue`) | **done, tested** |
 
 ## Index (phase 1)
 
@@ -49,7 +50,24 @@ over real data; `test_complete` generates finger chains on a bare hand, flexes a
 moves — animatable), and checks `list_gaps` before/after + symmetric fill; `test_atlas` parses a
 minimal `.osim`, joins by normalized name, and validates/syncs a model (origin/insertion,
 f0 deviation, side inference); `test_groom` runs the PBD guide solver (root pinned, inextensible
-segments settle to a vertical hang, wind deflects the tip) and checks GroomParams persistence.
+segments settle to a vertical hang, wind deflects the tip) and checks GroomParams persistence;
+`test_mcp` drives the MCP server over real data (initialize, tools/list, tools/call for
+describe/scale_bone/generate_fingers/select, error handling) and the McpQueue single-writer
+drain from many worker threads.
+
+## MCP server & in-process co-edit
+
+`McpServer::handle(request, model, index)` maps MCP JSON-RPC (`initialize`, `tools/list`,
+`tools/call`) onto libmassedit ops. Tools: `describe_model`, `get_node`, `get_muscle`, `select`,
+`muscles_of_body`, `muscles_crossing_joint`, `scale_bone`, `translate_subtree`, `rotate_joint`,
+`generate_fingers`, `list_gaps`, `load_atlas`, `validate_anatomy`, `sync_from_atlas`, `save`,
+`load`. Mutating tools rebuild the index.
+
+`McpQueue` is the co-edit mechanism: any thread `submit`s a request and gets a `std::future`;
+the owner thread (Arena's UI thread) calls `drain` once per frame to apply every request through
+`McpServer` on that single thread — no model locks, no data races. The Asio transport that feeds
+the queue is a thin wrapper (mirrors `Arena/src/TrainBridge`): a TCP server thread parses
+JSON-RPC and calls `queue.submit`, then writes back the resolved future.
 
 > Note: MSVC `<cmath>` resolves `<math.h>` case-insensitively — do **not** put `Arena/src`
 > (which contains `Math.h`) on the include path, or the UCRT `math.h` gets shadowed. This is

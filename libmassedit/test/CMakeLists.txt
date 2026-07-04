@@ -66,6 +66,23 @@ if(EXISTS "${_vcpkg_inc}/nlohmann/json.hpp")
         add_custom_command(TARGET test_atlas POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     "${_vcpkg_root}/bin/tinyxml2.dll" "$<TARGET_FILE_DIR:test_atlas>")
+
+        add_executable(test_mcp
+            test_mcp.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Mcp.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Query.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Batch.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Kinematics.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Complete.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Atlas.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../Index.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/../MassModel.cpp)
+        target_include_directories(test_mcp PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/.. "${_vcpkg_inc}")
+        target_link_libraries(test_mcp PRIVATE "${_vcpkg_root}/lib/tinyxml2.lib")
+        add_custom_command(TARGET test_mcp POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_vcpkg_root}/bin/tinyxml2.dll" "$<TARGET_FILE_DIR:test_mcp>")
     endif()
 endif()
 
@@ -96,5 +113,9 @@ if(TARGET test_model)
     add_test(NAME groom COMMAND test_groom)
     if(TARGET test_atlas)
         add_test(NAME atlas COMMAND test_atlas)
+    endif()
+    if(TARGET test_mcp)
+        add_test(NAME mcp COMMAND test_mcp
+                 "${CMAKE_CURRENT_SOURCE_DIR}/../../data/human.mass")
     endif()
 endif()
