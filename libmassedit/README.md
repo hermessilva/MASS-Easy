@@ -14,7 +14,7 @@ in [`Docs/MCP-Study.md`](../Docs/MCP-Study.md).
 | `Kinematics.*` | FK: rotate joint, propagate subtree, re-anchor waypoints | **done, tested** |
 | `DofMap.*` | anatomical DOF layer (name → joint/axis/sign/range) | **done, tested** |
 | `Batch.*` | scale_bone (along-axis, subtree slide, waypoint re-anchor), translate_subtree, L/R symmetric | **done, tested** |
-| `Complete.*` | joint/bone templates, `list_gaps` | planned |
+| `Complete.*` | finger/phalanx generation (Revolute flex chains), `list_gaps`, L/R symmetric | **done, tested** |
 | `Atlas.*` | OpenSim `.osim` parse + join | planned |
 | `Validate.*` | internal + atlas checks | planned |
 
@@ -44,7 +44,9 @@ and verifies reference counts (Pelvis = 112 muscles, 23 bones, 284 muscles, Femu
 waypoints); `test_kinematics` checks FK on a synthetic arm (subtree + waypoints follow, parent
 fixed, round-trip, proximal→distal chain order, DofMap value mapping); `test_batch` lengthens a
 synthetic femur (bone scales along its axis; child subtree keeps length and slides; waypoints
-follow; L/R symmetric scales both legs).
+follow; L/R symmetric scales both legs); `test_query` migrates uids + exercises the JSON facade
+over real data; `test_complete` generates finger chains on a bare hand, flexes a finger (tip
+moves — animatable), and checks `list_gaps` before/after + symmetric fill.
 
 > Note: MSVC `<cmath>` resolves `<math.h>` case-insensitively — do **not** put `Arena/src`
 > (which contains `Math.h`) on the include path, or the UCRT `math.h` gets shadowed. This is

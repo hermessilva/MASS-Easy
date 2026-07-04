@@ -9,6 +9,7 @@ add_library(massedit STATIC
     Kinematics.cpp
     DofMap.cpp
     Batch.cpp
+    Complete.cpp
     Query.cpp)
 
 target_include_directories(massedit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
