@@ -8,7 +8,11 @@
   <PropertyGroup>
     <VcpkgRoot>$(MSBuildThisFileDirectory)..\Deps\vcpkg\installed\x64-windows</VcpkgRoot>
     <LibRoot>$(MSBuildThisFileDirectory.TrimEnd('\'))</LibRoot>
-    <OutDir>$(ProjectDir)build\$(Platform)\$(Configuration)\</OutDir>
+    <!-- Executables go to the packaged Dist\x64\<Config> (same as build-dist.ps1);
+         the static lib stays in its own project-local build\ dir. -->
+    <RepoRoot>$(MSBuildThisFileDirectory)..\</RepoRoot>
+    <OutDir Condition="'$(ConfigurationType)'=='Application'">$(RepoRoot)Dist\x64\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(ConfigurationType)'!='Application'">$(ProjectDir)build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)build\int\$(ProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

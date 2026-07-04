@@ -40,7 +40,9 @@ msbuild MASS.slnx /p:Configuration=Release /p:Platform=x64 /m
 
 Standard VS layout — each project sits next to its sources:
 `libmassedit/massedit.vcxproj` (static lib), `libmassedit/server/mass-mcp.vcxproj`,
-`libmassedit/test/test_*.vcxproj`. Outputs land in each project's `build/x64/<Config>/`.
+`libmassedit/test/test_*.vcxproj`. Executables (`mass-mcp.exe`, `test_*.exe`) are emitted to
+`Dist/x64/<Config>/` alongside `tinyxml2.dll` (same location as `build-dist.ps1`); the static
+lib stays in its own `build/`.
 `libmassedit/common.props` (imported by every project) wires the toolchain
 (v145 / SDK 10.0.26100.0 / C++17) and the vcpkg `x64-windows` include+lib paths; exes link
 `massedit` via `ProjectReference` and copy `tinyxml2.dll` post-build.

@@ -18,9 +18,10 @@ ISO (YYYY-MM-DD).
   `test_complete`, `test_atlas`, `test_groom`, `test_mcp`).
 - `libmassedit/common.props`, imported by every project, centralizes the
   toolchain: PlatformToolset `v145`, SDK `10.0.26100.0`, C++17, the vcpkg
-  `x64-windows` include/lib paths (Debug/Release aware), per-project `build/`
-  output, and a post-build copy of `tinyxml2.dll`. Exes link `massedit` via
-  `ProjectReference`.
+  `x64-windows` include/lib paths (Debug/Release aware), and a post-build copy of
+  `tinyxml2.dll`. Executables are emitted to `Dist/x64/<Config>/` (same as
+  `build-dist.ps1`); the static lib stays in its own `build/`. Exes link
+  `massedit` via `ProjectReference`.
 - Builds clean in VS 2026 / MSBuild (`massedit.lib`, `mass-mcp.exe`, 9 test exes);
   all nine test binaries pass and the server answers over TCP from the VS output.
 
